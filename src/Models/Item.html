@@ -1,0 +1,16 @@
+<li class="todo__item item" data-id="${item.id}">
+	<div class="item__checkbox checkbox">
+		<input class="checkbox__input" type="checkbox" id="${item.id}"
+			${item.completed ? ' checked' : '' }>
+		<label for="${item.id}" class="checkbox__label">
+			<div class="checkbox__box">
+				<div class="checkbox__icon">
+					✔
+				</div>
+			</div>
+		</label>
+		<p class="item__text checkbox__text">${item.value}</p>
+	</div>
+	<button class="item__button-delete button btn-delete-task"
+		type="button">✖</button>
+</li>

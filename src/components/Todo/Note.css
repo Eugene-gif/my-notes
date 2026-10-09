@@ -1,0 +1,79 @@
+.note-view {
+  padding: 16px;
+  border: 1px solid var(--color-gray-border-light);
+  border-radius: 12px;
+  background: var(--color-white);
+  text-align: left;
+}
+
+.note-editor .modal-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--color-gray-dark);
+  font-size: 14px;
+  text-align: left;
+}
+
+.note-editor .input__field + .modal-label { margin-top: 20px; }
+
+.note-description.input__field {
+  display: block;
+  height: 180px;
+  min-height: 180px;
+  max-height: 100dvh;
+  box-sizing: border-box;
+  padding: 12px;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+  resize: none;
+  overflow-y: hidden;
+}
+
+.note-editor__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  gap: 12px;
+}
+
+.note-reader__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.note-reader__title { margin: 0; min-width: 0; font-size: 22px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.note-reader__header .btn-note-edit { flex-shrink: 0; }
+.note-reader__description { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 16px; line-height: 1.6; }
+.button.btn-note-cancel {
+  background-color: var(--color-transparent);
+  color: var(--color-gray-dark);
+  &:hover { background-color: var(--color-transparent); color: var(--color-gray-hover); }
+}
+
+.todo-modal.note-modal { max-width: 480px; }
+
+.todo-modal:is(.note-modal, .textarea-modal) {
+  max-height: calc(100dvh - 40px);
+  margin-top: 20px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.todo-modal:is(.note-modal, .textarea-modal) .panel {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 42px);
+  box-sizing: border-box;
+  overflow: hidden;
+  > * { flex-shrink: 0; }
+}
+
+.todo-modal:is(.note-modal, .textarea-modal) .note-description {
+  min-height: min(180px, var(--textarea-available-height, 180px));
+  max-height: var(--textarea-available-height, 100dvh);
+}
+
+.note .folder__count {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  white-space: pre-line;
+}
