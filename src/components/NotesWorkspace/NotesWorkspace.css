@@ -1,0 +1,55 @@
+.todo {
+  container-name: todo;
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+
+  .todo__header {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+    align-items: center;
+    gap: 8px;
+  }
+  .todo__header .todo__title {
+    grid-column: 2;
+  }
+  .todo__header .todo__context-options {
+    grid-column: 3;
+  }
+  .todo__back[hidden] {
+    display: none;
+  }
+
+  .todo__title {
+    font-weight: 600;
+    font-size: 1.75rem;
+    margin: 0;
+    line-height: 120%;
+    letter-spacing: -0.02em;
+    color: var(--color-black);
+  }
+
+  .todo__count {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--color-black);
+    margin: 10px 0;
+  }
+
+  .todo__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+  }
+}
+.todo-container {
+  max-width: var(--layout-width);
+}

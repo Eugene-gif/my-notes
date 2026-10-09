@@ -1,0 +1,76 @@
+.todo__count .todo__actions {
+  flex: 1 1 auto;
+  justify-content: flex-end;
+}
+.todo__batch-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.todo__selection-count {
+  font-size: 14px;
+  color: var(--color-gray);
+}
+.todo__cancel {
+  background: var(--color-gray-light);
+  color: var(--color-gray-dark);
+}
+.button.is-danger {
+  color: var(--color-red);
+  background: var(--color-red-light);
+  border-color: var(--color-red-border);
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.is-selected {
+  outline: 2px solid var(--color-yellow);
+  outline-offset: 1px;
+  background: var(--color-yellow-light) !important;
+}
+.item__selection {
+  display: grid;
+  place-items: center;
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  margin-top: 8px;
+  border: 1px solid var(--color-gray-muted);
+  border-radius: 6px;
+  color: var(--color-white);
+  background: var(--color-white);
+  cursor: pointer;
+  &[aria-pressed='true'] {
+    border-color: var(--color-yellow);
+    background: var(--color-yellow);
+  }
+}
+.is-selecting .todo__item .folder__options {
+  display: none;
+}
+.is-selecting .task__check {
+  display: none;
+}
+.is-selecting .todo__item {
+  cursor: pointer;
+}
+@media (max-width: 480px) {
+  .todo__count .todo__actions {
+    justify-content: flex-start;
+  }
+  .todo__batch-actions .button {
+    padding: 8px;
+    font-size: 12px;
+  }
+  .todo__batch-actions {
+    gap: 6px;
+  }
+  .todo__layout-name {
+    font-size: 12px;
+  }
+  .view-modal .todo__layout-icon {
+    width: 36px;
+  }
+}

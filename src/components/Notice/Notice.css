@@ -11,9 +11,6 @@
   color: var(--color-gray-dark);
   z-index: 20000;
   pointer-events: none;
-
-
-
 }
 
 .notice {
@@ -98,7 +95,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   .notice,
   .notice-host.is-closing .notice {
     animation: none;

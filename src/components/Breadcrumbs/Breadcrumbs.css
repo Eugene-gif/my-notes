@@ -1,0 +1,140 @@
+.todo__navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  height: 40px;
+  gap: 12px;
+}
+
+.todo__breadcrumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1 1 120px;
+  min-width: 0;
+  text-align: left;
+}
+
+.todo__path-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--color-transparent);
+  color: var(--color-gray);
+  font: inherit;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  text-align: left;
+  cursor: pointer;
+
+  &[aria-current='page'] {
+    background: var(--color-gray-light);
+    color: var(--color-gray-dark);
+    font-weight: 600;
+  }
+}
+
+.todo__path-icon {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+
+  .folder__svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.todo__path-name {
+  min-width: 0;
+}
+.todo__path-button[data-status='complete'] .todo__path-icon {
+  color: var(--color-green);
+}
+.todo__path-button[data-status='partial'] .todo__path-icon {
+  color: var(--color-yellow);
+}
+
+.todo__path-separator {
+  color: var(--color-gray-muted);
+}
+
+.todo__toolbar {
+  display: flex;
+  align-self: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  gap: 8px;
+  margin-left: auto;
+}
+
+[hidden],
+.todo .is-selection-hidden {
+  display: none !important;
+}
+body:has(dialog[open]) {
+  overflow: hidden;
+}
+
+.todo__navigation {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+.todo__breadcrumbs {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.todo__breadcrumbs .todo__path-button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.todo__breadcrumbs .todo__path-button:last-child {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.todo__path-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.todo__path-separator {
+  flex-shrink: 0;
+}
+.todo__toolbar {
+  align-self: center;
+}
+.todo__path-ellipsis {
+  font-size: 20px;
+}
+
+.todo-modal.path-modal {
+  position: fixed;
+  top: 20px;
+  margin: 0 auto;
+  max-width: 640px;
+  max-height: calc(100dvh - 40px);
+  overflow: hidden;
+}
+.path-modal .panel {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 42px);
+  overflow: hidden;
+}
+.path-items {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  overflow-y: auto;
+  min-height: 0;
+}
+.path-items .todo__path-name {
+  white-space: normal;
+}

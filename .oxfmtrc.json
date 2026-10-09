@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "singleQuote": true,
+  "semi": true,
+  "indent": 2,
+  "useTabs": true,
+  "printWidth": 100,
+  "bracketSpacing": true,
+  "endOfLine": "lf",
+  "overrides": [
+    {
+      "files": [
+        "*.vue",
+        "*.css",
+        "*.ts",
+      ],
+      "options": {
+        "vueIndentScriptAndStyle": true,
+        "vueIndentTemplate": true,
+        "scriptIndent": 2,
+        "styleIndent": 2,
+        "templateIndent": 2
+      }
+    },
+  ],
+  "force": true,
+  "ignoreConfigFiles": true,
+  "ignorePatterns": [
+    "node_modules/**",
+    "dist/**",
+    "public_html/**",
+    "coverage/**",
+    "output/**",
+    "package-lock.json"
+  ],
+}

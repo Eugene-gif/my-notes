@@ -1,0 +1,18 @@
+.todo__drop-choice {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: auto;
+  z-index: 10000;
+  width: 240px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+}
+.todo__drop-choice .folder__menu-action {
+  font-size: 13px;
+}
+.is-search-result {
+  outline: 2px solid var(--color-yellow);
+  outline-offset: 2px;
+}

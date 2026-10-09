@@ -58,7 +58,7 @@
 
 html {
   scrollbar-gutter: stable;
-  font-family: "Inter", sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
 }
 
@@ -78,7 +78,7 @@ body {
 }
 
 .todo-container {
-  max-width: --layout-width;
+  max-width: var(--layout-width);
   margin: 0 auto;
   padding: 24px;
   background-color: var(--color-white);
@@ -102,44 +102,32 @@ body {
   --notice-border: var(--notice-info-border);
 }
 
-.notice-host[data-status="success"] {
+.notice-host[data-status='success'] {
   --notice-accent: var(--notice-success);
   --notice-bg: var(--notice-success-bg);
   --notice-border: var(--notice-success-border);
 }
 
-.notice-host[data-status="error"] {
+.notice-host[data-status='error'] {
   --notice-accent: var(--notice-error);
   --notice-bg: var(--notice-error-bg);
   --notice-border: var(--notice-error-border);
-}
-
-.checkbox {
-  --icon-color: var(--color-white);
-  --icon-size: 16px;
-  --box-bg: var(--color-gray-dark);
-  --box-size: 30px;
-  --box-radius: 8px;
-  --box-border: 1px solid var(--color-gray);
-  --hover-color: var(--color-yellow);
-  --focus-color: var(--color-yellow);
-  --transition-duration: 0.2s;
 }
 
 .todo .todo__list {
   --columns: 1;
 }
 
-.todo .todo__list[data-layout="2"] {
+.todo .todo__list[data-layout='2'] {
   --columns: 2;
 }
 
-.todo .todo__list[data-layout="3"] {
+.todo .todo__list[data-layout='3'] {
   --columns: 3;
 }
 
 @container todo (max-width: 680px) {
-  .todo .todo__list[data-layout="3"] {
+  .todo .todo__list[data-layout='3'] {
     --columns: 2;
   }
 }
@@ -147,5 +135,55 @@ body {
 @container todo (max-width: 480px) {
   .todo .todo__list[data-layout] {
     --columns: 1;
+  }
+}
+[hidden] {
+  display: none !important;
+}
+.item {
+  touch-action: pan-y pinch-zoom;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--color-gray-border);
+  padding: 10px;
+  border-radius: 12px;
+  gap: 5px;
+  min-width: 0;
+  height: 100px;
+  box-sizing: border-box;
+
+  .item__text {
+    overflow-wrap: anywhere;
+  }
+
+  .checkbox__label {
+    flex-shrink: 0;
+  }
+
+  &.is-disappearing {
+    opacity: 0;
+    translate: 0 -75%;
+    transition-duration: 0.4s;
+    pointer-events: none;
+  }
+
+  &:has(input[type='checkbox']:checked) {
+    background-color: var(--color-green-light);
+  }
+}
+
+button {
+  font: inherit;
+}
+@media (max-width: 480px) {
+  #app {
+    padding: 16px 8px;
+  }
+  .todo-container {
+    padding: 16px 10px;
   }
 }

@@ -1,0 +1,33 @@
+.note-view {
+  padding: 16px;
+  border: 1px solid var(--color-gray-border-light);
+  border-radius: 12px;
+  background: var(--color-white);
+  text-align: left;
+}
+
+.note-reader__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.note-reader__title {
+  margin: 0;
+  min-width: 0;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.note-reader__header .btn-note-edit {
+  flex-shrink: 0;
+}
+.note-reader__description {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 16px;
+  line-height: 1.6;
+}

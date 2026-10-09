@@ -1,7 +1,7 @@
 .input {
   position: relative;
   width: 100%;
-  max-width: --layout-width;
+  max-width: var(--layout-width);
 }
 
 .input__field {
@@ -12,7 +12,7 @@
   padding: 12px 30px 12px 20px;
   max-height: 40px;
   outline: none;
-  max-width: --layout-width;
+  max-width: var(--layout-width);
   width: 100%;
   transition: border-color 0.1s linear;
 }
@@ -43,7 +43,7 @@
   position: absolute;
   right: 0;
 
-  @media(hover: hover) {
+  @media (hover: hover) {
     &:hover {
       background-color: var(--color-transparent);
       border-color: var(--color-transparent);
@@ -56,6 +56,6 @@
   border-color: var(--color-yellow);
 }
 
-.input__field:focus+.input__icon {
+.input__field:focus + .input__icon {
   color: var(--color-yellow);
 }

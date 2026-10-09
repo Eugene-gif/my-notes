@@ -1,0 +1,5 @@
+<script setup lang="ts">
+import { RouterView } from 'vue-router';
+import Notice from '@/components/Notice/Notice.vue';
+</script>
+<template><RouterView /><Notice /></template>

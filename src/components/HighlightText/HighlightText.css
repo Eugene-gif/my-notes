@@ -1,0 +1,5 @@
+mark {
+  background: var(--color-yellow-highlight);
+  color: var(--color-gray-dark);
+  border-radius: 2px;
+}

@@ -1,0 +1,28 @@
+import { mount } from '@vue/test-utils';
+import { expect, it, vi } from 'vitest';
+import { nextTick } from 'vue';
+import ContainerCard from '@/components/ContainerCard/ContainerCard.vue';
+import { useNotesStore } from '@/store/notesStore';
+import { fixture } from '../../../fixtures';
+it('renders container summaries safely and separates navigation from selection', async () => {
+  const state = fixture();
+  useNotesStore().state = state;
+  const wrapper = mount(ContainerCard, { props: { entry: state.notes[0] } });
+  expect(wrapper.find('.folder__title').text()).toContain('<img');
+  expect(wrapper.find('img').exists()).toBe(false);
+  await wrapper.find('.folder__open').trigger('click');
+  expect(wrapper.emitted('open')?.[0]).toEqual(['note']);
+  await wrapper.setProps({ selecting: true, selected: true });
+  await wrapper.find('.folder__open').trigger('click');
+  expect(wrapper.emitted('select')?.[0]).toEqual(['note']);
+  expect(wrapper.findComponent({ name: 'ActionMenu' }).exists()).toBe(false);
+});
+it('shows checklist completion and direct folder children', () => {
+  const state = fixture();
+  useNotesStore().state = state;
+  const list = mount(ContainerCard, { props: { entry: state.checklists[0] } });
+  expect(list.text()).toContain('Выполнено 1/2');
+  expect(list.attributes('data-status')).toBe('partial');
+  const folder = mount(ContainerCard, { props: { entry: state.folders[0] } });
+  expect(folder.text()).toContain('2 элемента');
+});
