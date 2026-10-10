@@ -1,0 +1,47 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "typescript",
+    "unicorn",
+    "oxc",
+    "vue"
+  ],
+  "env": {
+    "browser": true,
+    "node": true
+  },
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "func-style": [
+      "error",
+      "expression",
+      {
+        "overrides": {
+          "namedExports": "expression"
+        }
+      }
+    ],
+    "prefer-arrow-callback": "error",
+    "prefer-const": "error",
+    "no-var": "error",
+    "no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ]
+  },
+  "ignorePatterns": [
+    ".env",
+    ".env.*",
+    "node_modules/**",
+    "dist/**",
+    "public_html/**",
+    "coverage/**",
+    "output/**"
+  ]
+}

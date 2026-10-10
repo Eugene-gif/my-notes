@@ -1,0 +1,47 @@
+import { nextTick, ref } from 'vue';
+import { expect, it, vi } from 'vitest';
+import { useDialog } from '@/composables/useDialog';
+import { withSetup } from '../../composable';
+
+it('opens and closes with animation, cancels old close timers and cleans up', async () => {
+	vi.useFakeTimers();
+	const dialog = document.createElement('dialog');
+	dialog.style.animationDuration = '0.3s';
+	document.body.append(dialog);
+	const open = ref(true);
+	const close = vi.fn();
+	const { result, wrapper } = withSetup(() => useDialog(ref(dialog), open, close));
+	expect(dialog.open).toBe(true);
+	result.requestClose();
+	expect(close).toHaveBeenCalledOnce();
+	open.value = false;
+	await nextTick();
+	await nextTick();
+	vi.advanceTimersByTime(150);
+	expect(dialog.open).toBe(true);
+	open.value = true;
+	await nextTick();
+	await nextTick();
+	vi.advanceTimersByTime(300);
+	expect(dialog.open).toBe(true);
+	open.value = false;
+	await nextTick();
+	await nextTick();
+	vi.advanceTimersByTime(300);
+	expect(dialog.open).toBe(false);
+	open.value = true;
+	await nextTick();
+	await nextTick();
+	wrapper.unmount();
+	expect(dialog.open).toBe(false);
+});
+it('does not reopen a detached dialog from a queued update', async () => {
+	const dialog = document.createElement('dialog');
+	const open = ref(false);
+	const { wrapper } = withSetup(() => useDialog(ref(dialog), open, () => {}));
+	open.value = true;
+	await nextTick();
+	wrapper.unmount();
+	await nextTick();
+	expect(dialog.open).toBe(false);
+});

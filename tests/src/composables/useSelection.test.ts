@@ -1,0 +1,30 @@
+import { nextTick, ref } from 'vue';
+import { expect, it } from 'vitest';
+import type { Entry } from '@/types/notes';
+import { useSelection } from '@/composables/useSelection';
+import { fixture } from '../../fixtures';
+import { withSetup } from '../../composable';
+
+it('selects groups in visible order, clears stale ids and exits empty sections', async () => {
+	const entries = ref<Entry[]>(fixture().tasks);
+	const { result } = withSetup(() => useSelection(entries));
+	result.toggleMode();
+	result.toggle('task2');
+	result.toggle('task');
+	expect(result.ids.value).toEqual(['task', 'task2']);
+	expect(result.dragIds('task2')).toEqual(['task', 'task2']);
+	expect(result.dragIds('task3')).toEqual(['task3']);
+	result.toggleAll();
+	expect(result.ids.value).toHaveLength(3);
+	result.toggleAll();
+	expect(result.ids.value).toHaveLength(0);
+	result.mark('task');
+	expect(result.selecting.value).toBe(true);
+	result.mark('missing');
+	entries.value = [];
+	await nextTick();
+	expect(result.selecting.value).toBe(false);
+	expect(result.ids.value).toEqual([]);
+	result.toggleMode();
+	expect(result.selecting.value).toBe(false);
+});

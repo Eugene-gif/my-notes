@@ -1,0 +1,33 @@
+import { nextTick, ref } from 'vue';
+import { expect, it, vi } from 'vitest';
+import { useSearch } from '@/composables/useSearch';
+import type { ParentId } from '@/types/notes';
+import { fixture } from '../../fixtures';
+import { withSetup } from '../../composable';
+
+it('debounces new input and cancels on close and disposal', async () => {
+	vi.useFakeTimers();
+	const open = ref(true);
+	const id = ref<ParentId>(null);
+	const state = ref(fixture());
+	const { result, wrapper } = withSetup(() => useSearch(state, id, open));
+	result.query.value = 'купить';
+	await nextTick();
+	vi.advanceTimersByTime(250);
+	expect(result.results.value).toHaveLength(0);
+	result.query.value = 'план';
+	await nextTick();
+	vi.advanceTimersByTime(300);
+	expect(result.results.value.map((entry) => entry.id)).toEqual(['task2']);
+	result.query.value = 'купить';
+	await nextTick();
+	open.value = false;
+	await nextTick();
+	vi.advanceTimersByTime(300);
+	expect(result.results.value).toEqual([]);
+	open.value = true;
+	result.query.value = 'купить';
+	await nextTick();
+	wrapper.unmount();
+	expect(vi.getTimerCount()).toBe(0);
+});

@@ -1,0 +1,38 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "singleQuote": true,
+  "semi": true,
+  "tabWidth": 2,
+  "useTabs": true,
+  "printWidth": 100,
+  "bracketSpacing": true,
+  "arrowParens": "always",
+  "trailingComma": "all",
+  "endOfLine": "lf",
+  "vueIndentScriptAndStyle": true,
+  "htmlWhitespaceSensitivity": "ignore",
+  "overrides": [
+    {
+      "files": ["**/*.{json,jsonc,md,yml,yaml}"],
+      "options": {
+        "useTabs": false
+      }
+    },
+    {
+      "files": ["src/components/HighlightText.vue"],
+      "options": {
+        "htmlWhitespaceSensitivity": "strict"
+      }
+    }
+  ],
+  "ignorePatterns": [
+    ".env",
+    ".env.*",
+    "node_modules/**",
+    "dist/**",
+    "public_html/**",
+    "coverage/**",
+    "output/**",
+    "package-lock.json"
+  ]
+}
