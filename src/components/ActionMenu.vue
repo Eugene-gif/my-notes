@@ -15,7 +15,7 @@
 		}>(),
 		{ label: 'Действия элемента', toolbar: false, align: 'right' },
 	);
-	
+
 	const emit = defineEmits<{ action: [id: string]; 'open-change': [value: boolean] }>();
 	const root = ref<HTMLElement | null>(null);
 	const trigger = ref<HTMLButtonElement | null>(null);

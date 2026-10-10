@@ -3,6 +3,7 @@ import { defineConfig } from 'vitest/config';
 import { loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
+import { PWA_NAVIGATION_DENYLIST } from './src/constants/pwa.ts';
 
 export default defineConfig(({ mode }) => ({
 	base: loadEnv(mode, process.cwd(), 'VITE_').VITE_BASE_URL || '/',
@@ -38,7 +39,7 @@ export default defineConfig(({ mode }) => ({
 			workbox: {
 				globPatterns: ['**/*.{html,js,css,svg,png,woff,woff2}'],
 				navigateFallback: 'index.html',
-				navigateFallbackDenylist: [/\/api\//, /\.[^/]+$/],
+				navigateFallbackDenylist: PWA_NAVIGATION_DENYLIST,
 				cleanupOutdatedCaches: true,
 				clientsClaim: true,
 				skipWaiting: false,
