@@ -2,35 +2,37 @@
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "singleQuote": true,
   "semi": true,
-  "indent": 2,
+  "tabWidth": 2,
   "useTabs": true,
   "printWidth": 100,
   "bracketSpacing": true,
+  "arrowParens": "always",
+  "trailingComma": "all",
   "endOfLine": "lf",
+  "vueIndentScriptAndStyle": true,
+  "htmlWhitespaceSensitivity": "ignore",
   "overrides": [
     {
-      "files": [
-        "*.vue",
-        "*.css",
-        "*.ts",
-      ],
+      "files": ["**/*.{json,jsonc,md,yml,yaml}"],
       "options": {
-        "vueIndentScriptAndStyle": true,
-        "vueIndentTemplate": true,
-        "scriptIndent": 2,
-        "styleIndent": 2,
-        "templateIndent": 2
+        "useTabs": false
       }
     },
+    {
+      "files": ["src/components/HighlightText.vue"],
+      "options": {
+        "htmlWhitespaceSensitivity": "strict"
+      }
+    }
   ],
-  "force": true,
-  "ignoreConfigFiles": true,
   "ignorePatterns": [
+    ".env",
+    ".env.*",
     "node_modules/**",
     "dist/**",
     "public_html/**",
     "coverage/**",
     "output/**",
     "package-lock.json"
-  ],
+  ]
 }

@@ -1,8 +1,10 @@
 import { onMounted, onScopeDispose, watch, nextTick, type Ref } from 'vue';
-export function useAutoResizeTextarea(field: Ref<HTMLTextAreaElement | null>, value: Ref<string>) {
+
+const useAutoResizeTextarea = (field: Ref<HTMLTextAreaElement | null>, value: Ref<string>) => {
 	let observer: ResizeObserver | undefined;
 	let lastWidth = -1;
-	function resize() {
+
+	const resize = () => {
 		const area = field.value;
 		if (!area || !area.getClientRects().length) return;
 		const boundary = area.closest<HTMLElement>('[data-textarea-boundary]');
@@ -12,6 +14,7 @@ export function useAutoResizeTextarea(field: Ref<HTMLTextAreaElement | null>, va
 				.filter((child) => child !== area)
 				.reduce((sum, child) => {
 					const css = getComputedStyle(child);
+
 					return (
 						sum +
 						child.getBoundingClientRect().height +
@@ -40,7 +43,8 @@ export function useAutoResizeTextarea(field: Ref<HTMLTextAreaElement | null>, va
 		);
 		area.style.height = height + 'px';
 		area.style.overflowY = needed > height ? 'auto' : 'hidden';
-	}
+	};
+
 	watch(value, () => nextTick(resize));
 	onMounted(() => {
 		observer = new ResizeObserver((entries) => {
@@ -60,5 +64,8 @@ export function useAutoResizeTextarea(field: Ref<HTMLTextAreaElement | null>, va
 		window.removeEventListener('resize', resize);
 		window.visualViewport?.removeEventListener('resize', resize);
 	});
+
 	return { resize };
-}
+};
+
+export { useAutoResizeTextarea };
