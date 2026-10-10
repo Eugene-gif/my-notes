@@ -18,6 +18,20 @@ it('supports a custom root and an unavailable document', () => {
 	expect(() => applyTheme('dark', null)).not.toThrow();
 });
 
+it('uses the theme CSS color for the installed application toolbar', () => {
+	const meta = document.createElement('meta');
+	meta.name = 'theme-color';
+	document.head.append(meta);
+	const root = document.createElement('div');
+	root.style.setProperty('--color-gray-light', '#111827');
+	applyTheme('dark', root);
+	expect(meta.content).toBe('#111827');
+	root.style.setProperty('--color-gray-light', '#f5f5f5');
+	applyTheme('light', root);
+	expect(meta.content).toBe('#f5f5f5');
+	meta.remove();
+});
+
 it('does not access the DOM during server rendering', () => {
 	const browserDocument = document;
 	vi.stubGlobal('document', undefined);

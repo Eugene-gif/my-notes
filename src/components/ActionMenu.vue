@@ -15,6 +15,7 @@
 		}>(),
 		{ label: 'Действия элемента', toolbar: false, align: 'right' },
 	);
+	
 	const emit = defineEmits<{ action: [id: string]; 'open-change': [value: boolean] }>();
 	const root = ref<HTMLElement | null>(null);
 	const trigger = ref<HTMLButtonElement | null>(null);
@@ -71,7 +72,7 @@
 					:disabled="action.disabled"
 					@click.stop="choose(action.id)"
 				>
-					<IconMenu :name="action.id" />
+					<IconMenu :name="action.icon ?? action.id" />
 					<span class="menu__label">{{ action.label }}</span>
 				</button>
 			</div>

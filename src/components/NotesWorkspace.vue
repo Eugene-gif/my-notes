@@ -1,5 +1,6 @@
 <script setup lang="ts">
-	import { computed, onMounted, onScopeDispose, ref, toRef, watch } from 'vue';
+	import { computed, inject, onMounted, onScopeDispose, ref, toRef, watch } from 'vue';
+	import { PWA_KEY } from '@/constants/pwa';
 	import { useRoute, useRouter } from 'vue-router';
 	import type {
 		ContainerType,
@@ -32,18 +33,22 @@
 	import Button from '@/components/Button.vue';
 
 	const title = 'Мои заметки';
-	const userActions: MenuAction[] = [
-		{ id: 'theme', label: 'Сменить тему' },
-		{ id: 'register', label: 'Регистрация' },
-		{ id: 'login', label: 'Войти' },
-	];
-
 	const route = useRoute();
 	const router = useRouter();
 	const notes = useNotesStore();
 	const workspace = useWorkspaceStore();
 	const notices = useNoticesStore();
 	useTheme(toRef(workspace, 'theme'));
+	const pwa = inject(PWA_KEY, null);
+	const userActions = computed<MenuAction[]>(() => [
+		{ id: 'theme', label: 'Сменить тему', icon: workspace.theme === 'dark' ? 'sun' : 'moon' },
+		{ id: 'register', label: 'Регистрация' },
+		{ id: 'login', label: 'Войти' },
+		...(pwa && !pwa.installed.value
+			? [{ id: 'install' as const, label: 'Установить приложение', disabled: pwa.installing.value }]
+			: []),
+		...(pwa?.needRefresh.value ? [{ id: 'update' as const, label: 'Обновить приложение' }] : []),
+	]);
 
 	const root = ref<HTMLElement | null>(null);
 
@@ -193,6 +198,8 @@
 
 	const userAction = (action: string) => {
 		if (action === 'theme') workspace.toggleTheme();
+		if (action === 'install') void pwa?.install();
+		if (action === 'update' && pwa) pwa.dismissed.value = false;
 	};
 
 	const searchNavigate = (entry: Entry) => {
