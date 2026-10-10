@@ -1,5 +1,6 @@
 <script setup lang="ts">
-	import { ref } from 'vue';
+	import { computed, ref } from 'vue';
+	import { useUnsavedChanges } from '@/composables/useUnsavedChanges';
 	import type { Entry } from '@/types/notes';
 	import Input from '@/components/Input.vue';
 	import Button from '@/components/Button.vue';
@@ -12,6 +13,11 @@
 		props.entry ? (props.entry.type === 'task' ? props.entry.value : props.entry.name) : '',
 	);
 	const description = ref(props.entry?.type === 'note' ? props.entry.description : '');
+	const originalName = name.value;
+	const originalDescription = description.value;
+	useUnsavedChanges(
+		computed(() => name.value !== originalName || description.value !== originalDescription),
+	);
 	const fallbackName = formatFolderName();
 
 	const submit = () => {

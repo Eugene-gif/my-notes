@@ -14,7 +14,7 @@ export type MenuActionId =
 	| 'move'
 	| 'swap';
 
-export type UserMenuActionId = 'theme' | 'register' | 'login';
+export type UserMenuActionId = 'theme' | 'register' | 'login' | 'install' | 'update';
 export type TaskStatus = 'pending' | 'in-progress' | 'completed';
 export type Layout = '1' | '2' | '3';
 export type Theme = 'light' | 'dark';
@@ -66,6 +66,7 @@ export interface StorageLike {
 
 export interface MenuAction {
 	id: MenuActionId | UserMenuActionId;
+	icon?: 'sun' | 'moon';
 	label: string;
 	danger?: boolean;
 	disabled?: boolean;

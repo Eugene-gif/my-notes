@@ -1,7 +1,7 @@
 <script setup lang="ts">
 	import type { MenuActionId, UserMenuActionId, ContainerType } from '@/types/notes';
 
-	defineProps<{ name: MenuActionId | UserMenuActionId | ContainerType }>();
+	defineProps<{ name: MenuActionId | UserMenuActionId | ContainerType | 'sun' | 'moon' }>();
 </script>
 
 <template>
@@ -30,7 +30,13 @@
 			<rect width="7" height="7" x="14" y="14" rx="1" />
 			<rect width="7" height="7" x="3" y="14" rx="1" />
 		</template>
-		<template v-else-if="name === 'theme'">
+		<template v-else-if="name === 'sun'">
+			<circle cx="12" cy="12" r="4" />
+			<path
+				d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42m0-14.14-1.42 1.42m-11.3 11.3-1.42 1.42"
+			/>
+		</template>
+		<template v-else-if="name === 'theme' || name === 'moon'">
 			<path d="M20.9 13.1A9 9 0 0 1 10.9 3.1a9 9 0 1 0 10 10Z" />
 		</template>
 		<template v-else-if="name === 'register'">
@@ -39,6 +45,12 @@
 		</template>
 		<template v-else-if="name === 'login'">
 			<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M3 12h12m-4-4 4 4-4 4" />
+		</template>
+		<template v-else-if="name === 'install'">
+			<path d="M12 3v12m-4-4 4 4 4-4M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4" />
+		</template>
+		<template v-else-if="name === 'update'">
+			<path d="M20 7v5h-5M4 17v-5h5M5 7a8 8 0 0 1 13-2l2 2M4 17l2 2a8 8 0 0 0 13-2" />
 		</template>
 		<template v-else-if="name === 'select'">
 			<path d="M21 10.656V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12.344" />
