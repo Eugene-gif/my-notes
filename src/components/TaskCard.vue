@@ -329,7 +329,7 @@
 		height: 22px;
 		border: 1px solid var(--color-gray-muted);
 		border-radius: 6px;
-		color: var(--color-white);
+		color: var(--color-selection-text);
 		background: var(--color-white);
 		cursor: pointer;
 		&[aria-pressed='true'] {

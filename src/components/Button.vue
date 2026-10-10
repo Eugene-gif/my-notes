@@ -17,9 +17,9 @@
 		align-items: center;
 		justify-content: center;
 		gap: 8px;
-		border: 1px solid var(--color-gray-dark);
-		background-color: var(--color-gray-dark);
-		color: var(--color-white);
+		border: 1px solid var(--color-button-background);
+		background-color: var(--color-button-background);
+		color: var(--color-button-text);
 		border-radius: 8px;
 		cursor: pointer;
 		padding: 8px 12px;
@@ -37,8 +37,8 @@
 
 		@media (hover: hover) {
 			&:hover {
-				background-color: var(--color-gray-hover);
-				border-color: var(--color-gray-hover);
+				background-color: var(--color-button-hover);
+				border-color: var(--color-button-hover);
 			}
 		}
 

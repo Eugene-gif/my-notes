@@ -3,9 +3,15 @@ import { createPinia } from 'pinia';
 import App from './App.vue';
 import { createAppRouter, savedContainer } from './router';
 import { useNotesStore } from './store/notesStore';
+import { useWorkspaceStore } from './store/workspaceStore';
+import { applyTheme } from './utils/theme';
 import './assets/styles/style.css';
+import './assets/styles/themes.css';
 
 const pinia = createPinia();
+const workspace = useWorkspaceStore(pinia);
+workspace.initialize();
+applyTheme(workspace.theme);
 const saved = savedContainer();
 const router = createAppRouter(pinia);
 const app = createApp(App).use(pinia).use(router);

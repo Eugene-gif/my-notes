@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { computed, onMounted, onScopeDispose, ref, watch } from 'vue';
+	import { computed, onMounted, onScopeDispose, ref, toRef, watch } from 'vue';
 	import { useRoute, useRouter } from 'vue-router';
 	import type {
 		ContainerType,
@@ -17,6 +17,7 @@
 	import { containerNoun } from '@/utils/format';
 	import { useSelection } from '@/composables/useSelection';
 	import { useDragAndDrop } from '@/composables/useDragAndDrop';
+	import { useTheme } from '@/composables/useTheme';
 	import ActionMenu from '@/components/ActionMenu.vue';
 	import Breadcrumbs from '@/components/Breadcrumbs.vue';
 	import EntryList from '@/components/EntryList.vue';
@@ -42,6 +43,7 @@
 	const notes = useNotesStore();
 	const workspace = useWorkspaceStore();
 	const notices = useNoticesStore();
+	useTheme(toRef(workspace, 'theme'));
 
 	const root = ref<HTMLElement | null>(null);
 
@@ -189,6 +191,10 @@
 		if (current.value) cardAction(action, current.value.id);
 	};
 
+	const userAction = (action: string) => {
+		if (action === 'theme') workspace.toggleTheme();
+	};
+
 	const searchNavigate = (entry: Entry) => {
 		navigate(entry.type === 'task' ? entry.parentId : entry.id);
 		if (entry.type === 'task') {
@@ -306,6 +312,7 @@
 				align="left"
 				:actions="userActions"
 				label="Меню пользователя"
+				@action="userAction"
 			/>
 			<h1 class="todo__title">{{ title }}</h1>
 			<ActionMenu
@@ -431,11 +438,24 @@
 			flex-wrap: wrap;
 			gap: 12px;
 			align-items: center;
-			justify-content: space-between;
+			justify-content: flex-end;
 			font-weight: 600;
 			font-size: 1rem;
 			color: var(--color-black);
 			margin: 10px 0;
+		}
+		.todo__count-value {
+			display: flex;
+			align-items: center;
+			align-self: flex-start;
+			margin-right: auto;
+			white-space: nowrap;
+		}
+		&.is-selecting .todo__count-value {
+			min-height: 40px;
+		}
+		.todo__count :deep(.todo__batch-actions) {
+			display: contents;
 		}
 
 		.todo__actions {

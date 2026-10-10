@@ -3,7 +3,7 @@
 	import IconControl from '@/assets/icons/IconControl.vue';
 
 	withDefaults(defineProps<{ top?: string; width?: string }>(), { top: '20px', width: '460px' });
-	const { current, host, target, closing, close } = useNotice();
+	const { current, host, target, closing, entering, close } = useNotice();
 </script>
 
 <template>
@@ -12,7 +12,7 @@
 			v-if="current"
 			ref="host"
 			class="notice-host"
-			:class="{ 'is-closing': closing }"
+			:class="{ 'is-closing': closing, 'is-entering': entering }"
 			popover="manual"
 			:data-status="current.status"
 			:role="current.status === 'error' ? 'alert' : 'status'"
@@ -20,7 +20,7 @@
 			aria-atomic="true"
 			:style="{ '--notice-top': top, '--notice-width': width }"
 		>
-			<div class="notice">
+			<div class="notice" @animationend.self="entering = false">
 				<span class="notice__icon" aria-hidden="true">
 					{{ current.status === 'success' ? '✓' : current.status === 'error' ? '✕' : 'ⓘ' }}
 				</span>
@@ -64,6 +64,9 @@
 		border-radius: 12px;
 		background: var(--notice-bg);
 		box-shadow: 0 6px 24px var(--color-shadow);
+	}
+
+	.notice-host.is-entering .notice {
 		animation: notice-enter 180ms ease-out both;
 	}
 
@@ -137,7 +140,7 @@
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.notice,
+		.notice-host.is-entering .notice,
 		.notice-host.is-closing .notice {
 			animation: none;
 		}

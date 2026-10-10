@@ -31,7 +31,7 @@ export const useNotesStore = defineStore('notes', () => {
 			notices.show('Не удалось сохранить изменения в браузере.', 'error');
 			return false;
 		}
-		
+
 		state.value = draft;
 		notices.show(message, 'success');
 

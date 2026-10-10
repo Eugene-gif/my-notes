@@ -8,10 +8,14 @@ const useNotice = () => {
 	const host = ref<HTMLElement | null>(null);
 	const target = ref<Element | null>(null);
 	const closing = ref(false);
+	const entering = ref(true);
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	let removalTimer: ReturnType<typeof setTimeout> | undefined;
 	let observer: MutationObserver | undefined;
 	let previousFocus: Element | null = null;
+	let visibleMessageId: number | undefined;
+	let displayed = false;
+	let disposed = false;
 
 	const clear = () => {
 		clearTimeout(timer);
@@ -20,15 +24,27 @@ const useNotice = () => {
 
 	const display = async () => {
 		await nextTick();
-		if (current.value && host.value && !host.value.matches(':popover-open'))
-			host.value.showPopover?.();
-	};
-
-	const mount = () => {
-		const destination = [...document.querySelectorAll('dialog[open]')].at(-1) ?? document.body;
+		if (disposed || !current.value) return;
+		const dialog = [...document.querySelectorAll('dialog[open]')].at(-1);
+		if (dialog?.classList.contains('close')) return;
+		const destination = dialog ?? document.body;
 		if (target.value !== destination) {
+			if (displayed) entering.value = false;
 			target.value = destination;
-			void display();
+		}
+		await nextTick();
+		if (disposed || !current.value || !host.value) return;
+		const activeDialog = [...document.querySelectorAll('dialog[open]')].at(-1);
+		if (
+			activeDialog?.classList.contains('close') ||
+			(activeDialog ?? document.body) !== destination
+		)
+			return;
+		if (!host.value.matches(':popover-open')) host.value.showPopover?.();
+		displayed = true;
+		if (visibleMessageId !== current.value.id) {
+			visibleMessageId = current.value.id;
+			if (current.value.duration) timer = setTimeout(close, current.value.duration);
 		}
 	};
 
@@ -50,35 +66,47 @@ const useNotice = () => {
 		(value) => {
 			clear();
 			closing.value = false;
-			if (!value) return;
+			if (!value) {
+				displayed = false;
+				return;
+			}
 			previousFocus = document.activeElement;
-			mount();
+			if (!host.value?.matches(':popover-open')) entering.value = true;
 			void display();
-			if (value.duration) timer = setTimeout(close, value.duration);
 		},
 		{ flush: 'post' },
 	);
+
 	onMounted(() => {
-		mount();
-		observer = new MutationObserver(() => {
-			if (current.value) mount();
+		observer = new MutationObserver((records) => {
+			if (!current.value) return;
+			const dialogChanged = records.some((record) =>
+				record.type === 'attributes'
+					? record.target instanceof HTMLDialogElement
+					: [...record.addedNodes, ...record.removedNodes].some(
+						(node) =>
+							node instanceof Element && (node.matches('dialog') || node.querySelector('dialog')),
+					),
+			);
+			if (dialogChanged) void display();
 		});
+
 		observer.observe(document.documentElement, {
 			subtree: true,
+			childList: true,
 			attributes: true,
-			attributeFilter: ['open'],
+			attributeFilter: ['open', 'class'],
 		});
-		if (current.value) {
-			void display();
-			if (current.value.duration) timer = setTimeout(close, current.value.duration);
-		}
+		if (current.value) void display();
 	});
+
 	onScopeDispose(() => {
+		disposed = true;
 		clear();
 		observer?.disconnect();
 	});
 
-	return { current, host, target, closing, close };
+	return { current, host, target, closing, entering, close };
 };
 
 export { useNotice };

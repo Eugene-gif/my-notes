@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 import Notice from '@/components/Notice.vue';
@@ -9,8 +9,7 @@ it('announces errors, escapes messages and allows manual close', async () => {
 	const wrapper = mount(Notice, { attachTo: document.body });
 	const store = useNoticesStore();
 	store.show('<img src=x>', 'error', { duration: 0 });
-	await nextTick();
-	await nextTick();
+	await flushPromises();
 	const host = document.querySelector('.notice-host')!;
 	expect(host.getAttribute('role')).toBe('alert');
 	expect(host.textContent).toContain('<img src=x>');
@@ -27,11 +26,115 @@ it('moves into an active modal while remaining visible', async () => {
 	document.body.append(dialog);
 	dialog.showModal();
 	useNoticesStore().show('Поверх диалога', 'info', { duration: 0 });
-	await nextTick();
-	await nextTick();
-	expect(dialog.querySelector('.notice-host')).not.toBeNull();
+	await flushPromises();
+	const host = dialog.querySelector('.notice-host')!;
+	expect(host).not.toBeNull();
+	expect(host.matches(':popover-open')).toBe(true);
+	(host as HTMLElement).hidePopover();
 	dialog.close();
+	await flushPromises();
+	expect(document.body.querySelector(':scope > .notice-host')).toBe(host);
+	expect(host.matches(':popover-open')).toBe(true);
+	expect(host.classList.contains('is-entering')).toBe(false);
+	wrapper.unmount();
+});
+
+it('waits for a closing modal before showing the creation notice', async () => {
+	const wrapper = mount(Notice, { attachTo: document.body });
+	const dialog = document.createElement('dialog');
+	document.body.append(dialog);
+	dialog.showModal();
+	useNoticesStore().show('Элемент создан.', 'success', { duration: 0 });
+	dialog.classList.add('close');
+	await flushPromises();
+	expect(document.querySelector('.notice-host')).toBeNull();
+	dialog.close();
+	await flushPromises();
+	const host = document.body.querySelector(':scope > .notice-host')!;
+	expect(host.matches(':popover-open')).toBe(true);
+	expect(host.classList.contains('is-entering')).toBe(true);
+	host.querySelector('.notice')!.dispatchEvent(new Event('animationend', { bubbles: true }));
+	await flushPromises();
+	expect(host.classList.contains('is-entering')).toBe(false);
+	expect(document.querySelectorAll('.notice-host')).toHaveLength(1);
+	wrapper.unmount();
+});
+
+it('keeps an existing notice stable when a new modal opens', async () => {
+	const wrapper = mount(Notice, { attachTo: document.body });
+	const store = useNoticesStore();
+	store.show('Сохранено', 'success', { duration: 0 });
+	await flushPromises();
+	const host = document.querySelector('.notice-host')!;
+	host.querySelector('.notice')!.dispatchEvent(new Event('animationend', { bubbles: true }));
+	await flushPromises();
+	const dialog = document.createElement('dialog');
+	document.body.append(dialog);
+	dialog.showModal();
+	await flushPromises();
+	expect(dialog.querySelector('.notice-host')).toBe(host);
+	expect(host.classList.contains('is-entering')).toBe(false);
+	store.show('Новое сообщение', 'info', { duration: 0 });
+	await flushPromises();
+	expect(host.textContent).toContain('Новое сообщение');
+	expect(host.classList.contains('is-entering')).toBe(false);
+	expect(document.querySelectorAll('.notice-host')).toHaveLength(1);
+	wrapper.unmount();
+});
+
+it('shows deferred notices if closing is cancelled or a dialog is removed', async () => {
+	const wrapper = mount(Notice, { attachTo: document.body });
+	const dialog = document.createElement('dialog');
+	document.body.append(dialog);
+	dialog.showModal();
+	dialog.classList.add('close');
+	useNoticesStore().show('Ошибка сохранения', 'error', { duration: 0 });
+	await flushPromises();
+	expect(document.querySelector('.notice-host')).toBeNull();
+	dialog.classList.remove('close');
+	await flushPromises();
+	const host = dialog.querySelector('.notice-host')!;
+	expect(host.matches(':popover-open')).toBe(true);
+	dialog.remove();
+	await flushPromises();
+	expect(document.body.querySelector(':scope > .notice-host')).toBe(host);
+	expect(host.classList.contains('is-entering')).toBe(false);
+	wrapper.unmount();
+});
+
+it('does not show a pending notice after unmounting', async () => {
+	const wrapper = mount(Notice, { attachTo: document.body });
+	useNoticesStore().show('Pending', 'info', { duration: 0 });
 	await nextTick();
+	wrapper.unmount();
+	await flushPromises();
+	expect(document.querySelector('.notice-host')).toBeNull();
+});
+
+it('starts auto-close timing only after a deferred notice becomes visible', async () => {
+	vi.useFakeTimers();
+	const wrapper = mount(Notice, { attachTo: document.body });
+	const dialog = document.createElement('dialog');
+	document.body.append(dialog);
+	dialog.showModal();
+	dialog.classList.add('close');
+	const store = useNoticesStore();
+	store.show('Элемент создан.', 'success', { duration: 1000 });
+	await flushPromises();
+	vi.advanceTimersByTime(5000);
+	expect(store.current?.message).toBe('Элемент создан.');
+	dialog.close();
+	await flushPromises();
+	const host = document.querySelector('.notice-host')!;
+	vi.advanceTimersByTime(999);
 	await nextTick();
+	expect(host.classList.contains('is-closing')).toBe(false);
+	vi.advanceTimersByTime(1);
+	await nextTick();
+	expect(host.classList.contains('is-closing')).toBe(true);
+	vi.advanceTimersByTime(160);
+	await flushPromises();
+	expect(store.current).toBeNull();
+	expect(document.querySelector('.notice-host')).toBeNull();
 	wrapper.unmount();
 });

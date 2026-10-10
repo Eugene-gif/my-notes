@@ -12,7 +12,7 @@ const menuAction = async (
 	await flushPromises();
 };
 
-it('shows placeholder user actions without changing notes or navigation', async () => {
+it('switches the theme and keeps other user actions as placeholders', async () => {
 	const { wrapper, notes, router } = await mountWorkspace();
 	const original = JSON.stringify(notes.state);
 	const path = router.currentRoute.value.fullPath;
@@ -34,12 +34,17 @@ it('shows placeholder user actions without changing notes or navigation', async 
 		expect(JSON.stringify(notes.state)).toBe(original);
 		expect(router.currentRoute.value.fullPath).toBe(path);
 		expect(wrapper.find('.todo__user-trigger').attributes('aria-expanded')).toBe('false');
+		expect(document.documentElement.dataset.theme).toBe('dark');
 	}
+	await wrapper.find('.todo__user-trigger').trigger('click');
+	await flushPromises();
+	await wrapper.get('[role="menuitem"]').trigger('click');
+	expect(document.documentElement.dataset.theme).toBe('light');
 });
 
 it('creates a folder through the UI and confirms deletion without losing siblings', async () => {
 	const { wrapper, notes } = await mountWorkspace();
-	expect(wrapper.find('h1').text()).toBe('My notes');
+	expect(wrapper.find('h1').text()).toBe('Мои заметки');
 	await menuAction(wrapper, 'Добавить');
 	await wrapper.findAll('.todo__add-option')[0].trigger('click');
 	await flushPromises();

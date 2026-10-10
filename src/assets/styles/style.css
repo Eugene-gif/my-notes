@@ -31,6 +31,11 @@
 	--color-shadow-medium: #0000001a;
 	--color-shadow-strong: #00000026;
 	--color-backdrop: #00000099;
+	--color-button-background: var(--color-gray-dark);
+	--color-button-hover: var(--color-gray-hover);
+	--color-button-text: var(--color-white);
+	--color-selection-text: var(--color-white);
+	--color-input-background: var(--color-white);
 	--modal-animation-duration: 0.3s;
 	--task-expand-duration: 300ms;
 	--menu-animation-duration: 180ms;
@@ -39,6 +44,7 @@
 	font-weight: 400;
 	color: var(--color-gray-text);
 	background-color: var(--color-gray-light);
+	color-scheme: light;
 
 	font-synthesis: none;
 	text-rendering: optimizeLegibility;

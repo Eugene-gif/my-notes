@@ -57,8 +57,8 @@
 		}
 
 		&:has(input:checked) {
-			background-color: var(--color-gray-dark);
-			color: var(--color-white);
+			background-color: var(--color-button-background);
+			color: var(--color-button-text);
 		}
 
 		&:has(input:focus-visible) {
@@ -73,8 +73,8 @@
 			}
 
 			&:has(input:checked):hover {
-				background-color: var(--color-gray-hover);
-				color: var(--color-white);
+				background-color: var(--color-button-hover);
+				color: var(--color-button-text);
 			}
 		}
 	}

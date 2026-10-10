@@ -1,4 +1,4 @@
-import { nextTick } from 'vue';
+import { flushPromises } from '@vue/test-utils';
 import { expect, it, vi } from 'vitest';
 import { useNotice } from '@/composables/useNotice';
 import { useNoticesStore } from '@/store/noticesStore';
@@ -7,12 +7,13 @@ import { withSetup } from '../../composable';
 it('restarts timers for new messages and removes them on disposal', async () => {
 	vi.useFakeTimers();
 	const { result, wrapper } = withSetup(useNotice);
+	result.host.value = document.createElement('div');
 	const store = useNoticesStore();
 	store.show('One', 'info', { duration: 1000 });
-	await nextTick();
+	await flushPromises();
 	vi.advanceTimersByTime(900);
 	store.show('Two', 'success', { duration: 1000 });
-	await nextTick();
+	await flushPromises();
 	vi.advanceTimersByTime(900);
 	expect(store.current?.message).toBe('Two');
 	vi.advanceTimersByTime(100);
@@ -20,7 +21,7 @@ it('restarts timers for new messages and removes them on disposal', async () => 
 	vi.advanceTimersByTime(160);
 	expect(store.current).toBeNull();
 	store.show('Persistent', 'info', { duration: 0 });
-	await nextTick();
+	await flushPromises();
 	vi.advanceTimersByTime(5000);
 	expect(store.current?.message).toBe('Persistent');
 	result.close();

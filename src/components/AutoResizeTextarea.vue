@@ -45,6 +45,7 @@
 		font-size: 16px;
 		border: 2px solid var(--color-gray-border-light);
 		color: var(--color-black);
+		background-color: var(--color-input-background);
 		border-radius: 8px;
 		padding: 12px 30px 12px 20px;
 		max-height: 40px;

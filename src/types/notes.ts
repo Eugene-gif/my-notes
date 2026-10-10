@@ -17,6 +17,7 @@ export type MenuActionId =
 export type UserMenuActionId = 'theme' | 'register' | 'login';
 export type TaskStatus = 'pending' | 'in-progress' | 'completed';
 export type Layout = '1' | '2' | '3';
+export type Theme = 'light' | 'dark';
 
 export interface BaseEntry {
 	id: string;

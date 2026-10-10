@@ -12,5 +12,5 @@ it('mounts the routed workspace and global notice host', async () => {
 	await router.isReady();
 	const wrapper = mount(App, { global: { plugins: [pinia, router] } });
 	expect(wrapper.find('.todo').exists()).toBe(true);
-	expect(wrapper.find('h1').text()).toBe('My notes');
+	expect(wrapper.find('h1').text()).toBe('Мои заметки');
 });

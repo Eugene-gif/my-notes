@@ -101,6 +101,7 @@ Object.defineProperty(window, 'scrollBy', { configurable: true, value: vi.fn() }
 
 beforeEach(() => {
 	localStorage.clear();
+	document.documentElement.removeAttribute('data-theme');
 	setActivePinia(createPinia());
 	TestResizeObserver.instances = [];
 });
