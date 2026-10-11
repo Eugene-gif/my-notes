@@ -9,6 +9,7 @@
 		MenuAction,
 		ParentId,
 		PendingDrop,
+		Subtask,
 	} from '@/types/notes';
 	import { useNotesStore } from '@/store/notesStore';
 	import { useWorkspaceStore } from '@/store/workspaceStore';
@@ -44,8 +45,8 @@
 	const pwa = inject(PWA_KEY, null);
 	const userActions = computed<MenuAction[]>(() => [
 		{ id: 'theme', label: 'Сменить тему', icon: workspace.theme === 'dark' ? 'sun' : 'moon' },
-		{ id: 'register', label: 'Регистрация' },
-		{ id: 'login', label: 'Войти' },
+		{ id: 'register', label: 'Регистрация', disabled: true },
+		{ id: 'login', label: 'Войти', disabled: true },
 		...(pwa && !pwa.installed.value
 			? [{ id: 'install' as const, label: 'Установить приложение', disabled: pwa.installing.value }]
 			: []),
@@ -169,10 +170,17 @@
 		showForm(type);
 	};
 
-	const saveForm = (name: string, description: string) => {
+	const saveForm = (name: string, description: string, subtasks?: Subtask[]) => {
 		const success = edited.value
-			? notes.update(edited.value.id, name, description)
-			: !!notes.create(formType.value, currentId.value, name, description, insertPosition.value);
+			? notes.update(edited.value.id, name, description, subtasks)
+			: !!notes.create(
+					formType.value,
+					currentId.value,
+					name,
+					description,
+					insertPosition.value,
+					subtasks,
+				);
 		if (success) formOpen.value = false;
 	};
 
@@ -410,6 +418,7 @@
 						:highlight="highlight"
 						@open="navigate"
 						@toggle="notes.toggleTask"
+						@toggle-subtask="notes.toggleSubtask"
 						@select="toggle"
 						@action="cardAction"
 						@add="showTaskForm"

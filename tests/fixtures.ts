@@ -1,4 +1,9 @@
-import type { NotesState, StorageLike } from '@/types/notes';
+import type { NotesState, StorageLike, Subtask } from '@/types/notes';
+
+export const subtasksFixture = (): Subtask[] => [
+	{ id: 'subtask1', value: 'Купить хлеб', status: 'pending', completed: false },
+	{ id: 'subtask2', value: 'Купить молоко', status: 'pending', completed: false },
+];
 
 export const memoryStorage = (initial: Record<string, string> = {}): StorageLike => {
 	const values = new Map(Object.entries(initial));

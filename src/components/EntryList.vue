@@ -20,6 +20,7 @@
 
 	const emit = defineEmits<{
 		toggle: [id: string];
+		'toggle-subtask': [id: string, subtaskId: string];
 		select: [id: string];
 		open: [id: string];
 		action: [action: string, id: string];
@@ -59,6 +60,7 @@
 				:selected="selected.has(entry.id)"
 				:class="{ 'is-search-result': highlight === entry.id }"
 				@toggle="emit('toggle', $event)"
+				@toggle-subtask="(id, subtaskId) => emit('toggle-subtask', id, subtaskId)"
 				@select="emit('select', $event)"
 				@action="(action, id) => emit('action', action, id)"
 			/>

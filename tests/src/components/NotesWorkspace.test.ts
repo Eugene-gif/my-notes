@@ -37,31 +37,84 @@ it('saves edited multiline tasks without joining lines in persisted data', async
 	);
 });
 
-it('switches the theme and keeps other user actions as placeholders', async () => {
+it('creates, expands, changes and edits subtasks through the workspace without directly toggling the parent', async () => {
+	const { wrapper, notes, storage } = await mountWorkspace('/entry/list');
+	await wrapper.get('.todo__add-task').trigger('click');
+	await wrapper.get('#task-name').setValue('Покупки');
+	await wrapper.get('.subtask-editor__add').trigger('click');
+	await wrapper.get('.subtask-editor__field input').setValue('Купить хлеб');
+	await wrapper.get('.subtask-editor__add').trigger('click');
+	await wrapper.findAll('.subtask-editor__field input')[1].setValue('Купить молоко');
+	await wrapper.get('dialog[open] form').trigger('submit');
+	await flushPromises();
+	const task = notes.state.tasks.find((entry) => entry.value === 'Покупки')!;
+	expect(task.subtasks).toHaveLength(2);
+	const card = wrapper.get('[data-id="' + task.id + '"]');
+	await card.get('.task__toggle').trigger('click');
+	expect(notes.entry(task.id)).toMatchObject({ status: 'pending' });
+	expect(card.classes()).toContain('is-expanded');
+	await card.get('.task__expand').trigger('click');
+	expect(card.classes()).not.toContain('is-expanded');
+	await card.trigger('click');
+	expect(card.classes()).toContain('is-expanded');
+	await card.get('.subtask__toggle').trigger('click');
+	expect(notes.entry(task.id)).toMatchObject({ status: 'in-progress' });
+	await card.get('.subtask__toggle').trigger('click');
+	await card.findAll('.subtask__toggle')[1].trigger('click');
+	await card.findAll('.subtask__toggle')[1].trigger('click');
+	expect(notes.entry(task.id)).toMatchObject({ status: 'completed', completed: true });
+	expect(restoreNotes(storage).tasks.find((entry) => entry.id === task.id)).toEqual(
+		notes.entry(task.id),
+	);
+	await card.get('.folder__options').trigger('click');
+	await card
+		.findAll('[role="menuitem"]')
+		.find((item) => item.text() === 'Изменить')!
+		.trigger('click');
+	await flushPromises();
+	await wrapper.get('.subtask-editor__remove').trigger('click');
+	await wrapper.get('.subtask-editor__add').trigger('click');
+	await wrapper.findAll('.subtask-editor__field input')[1].setValue('Купить чай');
+	await wrapper.get('dialog[open] form').trigger('submit');
+	await flushPromises();
+	expect(notes.entry(task.id)).toMatchObject({
+		status: 'in-progress',
+		subtasks: [
+			{ id: task.subtasks![1].id, value: 'Купить молоко', status: 'completed' },
+			{ value: 'Купить чай', status: 'pending' },
+		],
+	});
+});
+
+it('switches the theme while registration and login remain disabled', async () => {
 	const { wrapper, notes, router } = await mountWorkspace();
 	const original = JSON.stringify(notes.state);
 	const path = router.currentRoute.value.fullPath;
-	for (const label of ['Сменить тему', 'Регистрация', 'Войти']) {
-		await wrapper.find('.todo__user-trigger').trigger('click');
-		await flushPromises();
-		const menu = wrapper.find('.todo__user-options [role="menu"]');
-		expect(menu.classes()).toContain('is-aligned-left');
-		expect(menu.findAll('[role="menuitem"]').map((item) => item.text())).toEqual([
-			'Сменить тему',
-			'Регистрация',
-			'Войти',
-		]);
-		await menu
-			.findAll('[role="menuitem"]')
-			.find((item) => item.text() === label)!
-			.trigger('click');
+	await wrapper.get('.todo__user-trigger').trigger('click');
+	await flushPromises();
+	const menu = wrapper.get('.todo__user-options [role="menu"]');
+	expect(menu.classes()).toContain('is-aligned-left');
+	expect(menu.findAll('[role="menuitem"]').map((item) => item.text())).toEqual([
+		'Сменить тему',
+		'Регистрация',
+		'Войти',
+	]);
+	for (const label of ['Регистрация', 'Войти']) {
+		const action = menu.findAll('[role="menuitem"]').find((item) => item.text() === label)!;
+		expect(action.attributes('disabled')).toBeDefined();
+		await action.trigger('click');
 		await flushPromises();
 		expect(JSON.stringify(notes.state)).toBe(original);
 		expect(router.currentRoute.value.fullPath).toBe(path);
-		expect(wrapper.find('.todo__user-trigger').attributes('aria-expanded')).toBe('false');
-		expect(document.documentElement.dataset.theme).toBe('dark');
+		expect(wrapper.get('.todo__user-trigger').attributes('aria-expanded')).toBe('true');
+		expect(document.documentElement.dataset.theme).toBe('light');
 	}
-	await wrapper.find('.todo__user-trigger').trigger('click');
+	const theme = menu.findAll('[role="menuitem"]')[0];
+	expect(theme.attributes('disabled')).toBeUndefined();
+	await theme.trigger('click');
+	expect(wrapper.get('.todo__user-trigger').attributes('aria-expanded')).toBe('false');
+	expect(document.documentElement.dataset.theme).toBe('dark');
+	await wrapper.get('.todo__user-trigger').trigger('click');
 	await flushPromises();
 	await wrapper.get('[role="menuitem"]').trigger('click');
 	expect(document.documentElement.dataset.theme).toBe('light');

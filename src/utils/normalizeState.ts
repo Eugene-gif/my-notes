@@ -1,4 +1,12 @@
-import type { BaseEntry, ContainerType, NotesState, TaskStatus } from '@/types/notes';
+import type {
+	BaseEntry,
+	ContainerType,
+	NotesState,
+	Subtask,
+	Task,
+	TaskStatus,
+} from '@/types/notes';
+import { syncTaskStatus } from '@/utils/taskStatus';
 
 const createEmptyState = (): NotesState => ({ tasks: [], folders: [], checklists: [], notes: [] });
 
@@ -62,13 +70,40 @@ const normalizeState = (value: unknown): NotesState => {
 		description: item.description as string,
 	}));
 
-	state.tasks = read('tasks', 'task').map((item) => ({
-		...base(item),
-		type: 'task',
-		value: item.value as string,
-		status: item.status as TaskStatus,
-		completed: item.status === 'completed',
-	}));
+	state.tasks = read('tasks', 'task').map((item) => {
+		const task: Task = {
+			...base(item),
+			type: 'task',
+			value: item.value as string,
+			status: item.status as TaskStatus,
+			completed: item.status === 'completed',
+		};
+		if (Array.isArray(item.subtasks)) {
+			task.subtasks = item.subtasks.flatMap((subtask): Subtask[] => {
+				if (
+					!isRecord(subtask) ||
+					typeof subtask.id !== 'string' ||
+					!subtask.id.trim() ||
+					usedIds.has(subtask.id) ||
+					typeof subtask.value !== 'string' ||
+					!subtask.value.trim() ||
+					!['pending', 'in-progress', 'completed'].includes(subtask.status as string)
+				)
+					return [];
+				usedIds.add(subtask.id);
+				return [
+					{
+						id: subtask.id,
+						value: subtask.value,
+						status: subtask.status as TaskStatus,
+						completed: subtask.status === 'completed',
+					},
+				];
+			});
+		}
+		syncTaskStatus(task);
+		return task;
+	});
 
 	const folders = new Map(state.folders.map((folder) => [folder.id, folder]));
 

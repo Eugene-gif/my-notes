@@ -76,3 +76,36 @@ it('keeps touch swipes native before hold, starts after hold and cancels with Es
 	expect(document.querySelector('.todo__drag-preview')).toBeNull();
 	wrapper.unmount();
 });
+
+it('does not start mouse or touch dragging from nested subtask controls', () => {
+	vi.useFakeTimers();
+	const root = document.createElement('div');
+	root.innerHTML =
+		'<li class="todo__item" data-id="task"><button data-no-drag><span>Подзадача</span></button></li>';
+	document.body.append(root);
+	const onDrop = vi.fn();
+	withSetup(() =>
+		useDragAndDrop(ref(root), {
+			getEntry: () => fixture().tasks[0],
+			getDragIds: (id) => [id],
+			canDrop: () => true,
+			onDrop,
+			onNavigate: vi.fn(),
+			onStatus: vi.fn(),
+		}),
+	);
+	for (const pointerType of ['mouse', 'touch']) {
+		root
+			.querySelector('span')!
+			.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType }));
+		vi.advanceTimersByTime(400);
+		root.dispatchEvent(
+			new PointerEvent('pointermove', { bubbles: true, pointerType, clientX: 100, clientY: 40 }),
+		);
+		root.dispatchEvent(
+			new PointerEvent('pointerup', { bubbles: true, pointerType, clientX: 100, clientY: 40 }),
+		);
+		expect(document.querySelector('.todo__drag-preview')).toBeNull();
+	}
+	expect(onDrop).not.toHaveBeenCalled();
+});

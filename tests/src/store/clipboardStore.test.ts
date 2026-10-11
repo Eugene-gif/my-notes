@@ -4,7 +4,7 @@ import { useClipboardStore } from '@/store/clipboardStore';
 import { useNotesStore } from '@/store/notesStore';
 import { useNoticesStore } from '@/store/noticesStore';
 import { persistNotes, restoreNotes } from '@/utils/persistence';
-import { fixture, memoryStorage } from '../../fixtures';
+import { fixture, memoryStorage, subtasksFixture } from '../../fixtures';
 
 const setup = () => {
 	const storage = memoryStorage();
@@ -67,4 +67,29 @@ it('keeps the clipboard scoped to its Pinia instance', () => {
 	clipboard.copy(['note']);
 	expect(useClipboardStore(createPinia()).buffer).toBeNull();
 	expect(clipboard.count).toBe(1);
+});
+
+it('pastes independently persisted subtasks and keeps their snapshot when originals change', () => {
+	const { storage, notes, clipboard } = setup();
+	notes.update('task', 'Покупки', '', subtasksFixture());
+	notes.toggleSubtask('task', 'subtask1');
+	clipboard.copy(['list']);
+	notes.toggleSubtask('task', 'subtask1');
+	expect(clipboard.paste('folder')).toBe(true);
+	const checklist = notes.state.checklists.find(
+		(entry) => entry.id !== 'list' && entry.id !== 'other',
+	)!;
+	const copy = notes.state.tasks.find(
+		(entry) => entry.parentId === checklist.id && entry.value === 'Покупки',
+	)!;
+	expect(copy.subtasks?.[0]).toMatchObject({ status: 'in-progress' });
+	expect(copy.subtasks?.[0].id).not.toBe('subtask1');
+	notes.toggleSubtask(copy.id, copy.subtasks![0].id);
+	expect(restoreNotes(storage).tasks.find((task) => task.id === copy.id)).toMatchObject({
+		subtasks: [{ status: 'completed' }, { status: 'pending' }],
+	});
+	expect(notes.state.tasks.find((task) => task.id === 'task')?.subtasks?.[0].status).toBe(
+		'completed',
+	);
+	expect(clipboard.buffer).toBeNull();
 });

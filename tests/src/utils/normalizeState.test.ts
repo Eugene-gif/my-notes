@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { createEmptyState, normalizeState } from '@/utils/normalizeState';
-import { fixture } from '../../fixtures';
+import { fixture, subtasksFixture } from '../../fixtures';
 
 it('copies current records without changing text, ordering or statuses', () => {
 	const source = fixture();
@@ -60,4 +60,40 @@ it('derives the completion flag from the current status', () => {
 	const normalized = normalizeState(source);
 	expect(normalized.tasks[0].completed).toBe(false);
 	expect(normalized.tasks[1].completed).toBe(true);
+});
+
+it('restores valid subtasks, derives parent status and discards malformed or colliding child IDs', () => {
+	const source = fixture();
+	const subtasks = subtasksFixture();
+	subtasks[0].status = 'completed';
+	const normalized = normalizeState({
+		...source,
+		tasks: [
+			{
+				...source.tasks[0],
+				subtasks: [
+					null,
+					{},
+					{ ...subtasks[0], id: 'note' },
+					{ ...subtasks[0], value: ' ' },
+					{ ...subtasks[0], status: 'wrong' },
+					...subtasks,
+					subtasks[0],
+				],
+			},
+			{ ...source.tasks[1], subtasks: [subtasks[0]] },
+		],
+	});
+	expect(normalized.tasks[0]).toMatchObject({
+		status: 'in-progress',
+		completed: false,
+		subtasks: [{ ...subtasks[0], completed: true }, subtasks[1]],
+	});
+	expect(normalized.tasks[1].subtasks).toEqual([]);
+	expect(normalized.tasks[0].subtasks?.[0]).not.toBe(subtasks[0]);
+	const complete = normalizeState({
+		...source,
+		tasks: [{ ...source.tasks[0], subtasks: [{ ...subtasks[0], status: 'completed' }] }],
+	});
+	expect(complete.tasks[0]).toMatchObject({ status: 'completed', completed: true });
 });

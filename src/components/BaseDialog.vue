@@ -142,18 +142,18 @@
 		margin-top: min(20vh, 80px);
 	}
 
-	.todo-modal.note-modal {
+	.todo-modal:is(.note-modal, .task-modal) {
 		max-width: 480px;
 	}
 
-	.todo-modal.note-modal {
+	.todo-modal:is(.note-modal, .task-modal) {
 		max-height: calc(100dvh - 40px);
 		margin-top: 20px;
 		padding: 0;
 		overflow: hidden;
 	}
 
-	.todo-modal.note-modal .panel {
+	.todo-modal:is(.note-modal, .task-modal) .panel {
 		display: flex;
 		flex-direction: column;
 		max-height: calc(100dvh - 42px);

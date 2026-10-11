@@ -25,11 +25,19 @@ export interface BaseEntry {
 	order: number;
 }
 
+export interface Subtask {
+	id: string;
+	value: string;
+	completed: boolean;
+	status: TaskStatus;
+}
+
 export interface Task extends BaseEntry {
 	type: 'task';
 	value: string;
 	completed: boolean;
 	status: TaskStatus;
+	subtasks?: Subtask[];
 }
 
 export interface Folder extends BaseEntry {

@@ -1,8 +1,9 @@
 import { expect, it, vi } from 'vitest';
 import { useNotesStore } from '@/store/notesStore';
 import { useNoticesStore } from '@/store/noticesStore';
-import { persistNotes } from '@/utils/persistence';
-import { fixture, memoryStorage } from '../../fixtures';
+import { persistNotes, restoreNotes } from '@/utils/persistence';
+import { getChecklistStats } from '@/utils/entries';
+import { fixture, memoryStorage, subtasksFixture } from '../../fixtures';
 
 it('creates, edits, cycles statuses, moves and removes persisted entities', () => {
 	const storage = memoryStorage();
@@ -47,4 +48,63 @@ it('initializes once and handles unavailable storage', () => {
 	notes.initialize(memoryStorage());
 	expect(notes.initialized).toBe(true);
 	expect(notes.create('folder', null, 'x')).toBeNull();
+});
+
+it('persists subtask status cycles and derives parent/checklist status instead of allowing manual toggles', () => {
+	const storage = memoryStorage();
+	persistNotes(fixture(), storage);
+	const notes = useNotesStore();
+	notes.initialize(storage);
+	const subtasks = subtasksFixture();
+	const id = notes.create('task', 'list', 'Покупки', '', 'after', subtasks)!;
+	expect(notes.toggleTask(id)).toBe(false);
+	expect(notes.toggleSubtask(id, 'missing')).toBe(false);
+	expect(notes.toggleSubtask('note', 'subtask1')).toBe(false);
+	expect(notes.toggleSubtask(id, 'subtask1')).toBe(true);
+	expect(notes.entry(id)).toMatchObject({ status: 'in-progress', completed: false });
+	for (const subtask of subtasks) {
+		if (subtask.id === 'subtask2') notes.toggleSubtask(id, subtask.id);
+		notes.toggleSubtask(id, subtask.id);
+	}
+	expect(notes.entry(id)).toMatchObject({ status: 'completed', completed: true });
+	expect(getChecklistStats(notes.state, 'list').completed).toBe(2);
+	expect(restoreNotes(storage).tasks.find((task) => task.id === id)).toEqual(notes.entry(id));
+	notes.toggleSubtask(id, 'subtask1');
+	expect(notes.entry(id)).toMatchObject({ status: 'in-progress', completed: false });
+	notes.toggleSubtask(id, 'subtask2');
+	expect(notes.entry(id)).toMatchObject({ status: 'pending', completed: false });
+	expect(subtasks).toEqual(subtasksFixture());
+	expect(notes.update(id, 'Без подзадач', '', [])).toBe(true);
+	expect(notes.toggleTask(id)).toBe(true);
+});
+
+it('preserves retained subtask statuses when editing and rolls back rejected saves', () => {
+	const storage = memoryStorage();
+	const notes = useNotesStore();
+	notes.initialize(storage);
+	const subtasks = subtasksFixture();
+	subtasks[0].status = 'completed';
+	subtasks[0].completed = true;
+	const id = notes.create(
+		'task',
+		notes.create('checklist', null, 'Перечень'),
+		'Задача',
+		'',
+		'after',
+		subtasks,
+	)!;
+	expect(notes.entry(id)).toMatchObject({ status: 'in-progress' });
+	expect(notes.update(id, 'Правка')).toBe(true);
+	expect(notes.entry(id)).toMatchObject({ subtasks });
+	expect(notes.update(id, 'Правка', '', [{ ...subtasks[1], value: ' ' }])).toBe(false);
+	expect(
+		notes.create('task', null, 'Задача', '', 'after', [{ ...subtasks[1], value: ' ' }]),
+	).toBeNull();
+	const original = JSON.stringify(notes.state);
+	vi.spyOn(storage, 'setItem').mockImplementation(() => {
+		throw Error('quota');
+	});
+	expect(notes.toggleSubtask(id, 'subtask2')).toBe(false);
+	expect(notes.update(id, 'Правка', '', [subtasks[1]])).toBe(false);
+	expect(JSON.stringify(notes.state)).toBe(original);
 });

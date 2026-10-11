@@ -1,31 +1,53 @@
 <script setup lang="ts">
 	import { computed, ref } from 'vue';
 	import { useUnsavedChanges } from '@/composables/useUnsavedChanges';
-	import type { Entry } from '@/types/notes';
+	import type { Entry, Subtask } from '@/types/notes';
+	import SubtaskEditor from '@/components/SubtaskEditor.vue';
 	import Input from '@/components/Input.vue';
 	import Button from '@/components/Button.vue';
 	import AutoResizeTextarea from '@/components/AutoResizeTextarea.vue';
 	import { formatFolderName } from '@/utils/format';
 
 	const props = defineProps<{ type: Entry['type']; entry?: Entry; inline?: boolean }>();
-	const emit = defineEmits<{ save: [name: string, description: string]; cancel: [] }>();
+	const emit = defineEmits<{
+		save: [name: string, description: string, subtasks?: Subtask[]];
+		cancel: [];
+	}>();
 	const name = ref(
 		props.entry ? (props.entry.type === 'task' ? props.entry.value : props.entry.name) : '',
 	);
 	const description = ref(props.entry?.type === 'note' ? props.entry.description : '');
 	const originalName = name.value;
 	const originalDescription = description.value;
+	const subtasks = ref<Subtask[]>(
+		props.entry?.type === 'task'
+			? (props.entry.subtasks ?? []).map((subtask) => ({ ...subtask }))
+			: [],
+	);
+	const originalSubtasks = JSON.stringify(subtasks.value);
 	const multilineTask = computed(
 		() => props.entry?.type === 'task' && /[\r\n]/.test(props.entry.value),
 	);
 	useUnsavedChanges(
-		computed(() => name.value !== originalName || description.value !== originalDescription),
+		computed(
+			() =>
+				name.value !== originalName ||
+				description.value !== originalDescription ||
+				JSON.stringify(subtasks.value) !== originalSubtasks,
+		),
 	);
 	const fallbackName = formatFolderName();
 
 	const submit = () => {
-		if (props.type === 'task' && !name.value.trim()) return;
-		emit('save', name.value, description.value);
+		if (props.type === 'task') {
+			if (!name.value.trim() || subtasks.value.some((subtask) => !subtask.value.trim())) return;
+			emit(
+				'save',
+				name.value,
+				description.value,
+				subtasks.value.map((subtask) => ({ ...subtask })),
+			);
+		} else emit('save', name.value, description.value);
 	};
 </script>
 
@@ -69,6 +91,7 @@
 			/>
 			<p class="folder-name-hint">Без названия: {{ fallbackName }}</p>
 		</template>
+		<SubtaskEditor v-if="type === 'task'" v-model="subtasks" />
 		<AutoResizeTextarea
 			v-if="type === 'note'"
 			id="note-description"
@@ -96,6 +119,11 @@
 	.entry-form-modal :deep(.note-description) {
 		min-height: min(180px, var(--textarea-available-height, 180px));
 		max-height: var(--textarea-available-height, 100dvh);
+	}
+	.entry-form-modal :deep(.subtask-editor) {
+		flex: 1 1 auto;
+		min-height: 0;
+		overflow-y: auto;
 	}
 
 	.note-editor :deep(.input__field + .modal-label) {
