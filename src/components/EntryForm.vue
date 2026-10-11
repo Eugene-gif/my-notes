@@ -15,6 +15,9 @@
 	const description = ref(props.entry?.type === 'note' ? props.entry.description : '');
 	const originalName = name.value;
 	const originalDescription = description.value;
+	const multilineTask = computed(
+		() => props.entry?.type === 'task' && /[\r\n]/.test(props.entry.value),
+	);
 	useUnsavedChanges(
 		computed(() => name.value !== originalName || description.value !== originalDescription),
 	);
@@ -33,8 +36,17 @@
 		:data-textarea-boundary="inline ? undefined : ''"
 		@submit.prevent="submit"
 	>
+		<AutoResizeTextarea
+			v-if="type === 'task' && multilineTask"
+			id="task-name"
+			v-model="name"
+			label="Текст задачи"
+			placeholder="Добавить задачу"
+			required
+			autofocus
+		/>
 		<Input
-			v-if="type === 'task'"
+			v-else-if="type === 'task'"
 			id="task-name"
 			v-model="name"
 			label="Текст задачи"

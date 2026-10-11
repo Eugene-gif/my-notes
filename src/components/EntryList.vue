@@ -26,7 +26,7 @@
 		add: [position: 'before' | 'after'];
 		'add-entry': [];
 	}>();
-	
+
 	const list = ref<HTMLElement | null>(null);
 	const version = computed(() => [props.entries, props.layout]);
 	useCardLayout(list, version);

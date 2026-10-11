@@ -4,6 +4,7 @@ import { mountWorkspace } from '../../workspace';
 import { useClipboardStore } from '@/store/clipboardStore';
 import { getChildren } from '@/utils/entries';
 import { useNoticesStore } from '@/store/noticesStore';
+import { restoreNotes } from '@/utils/persistence';
 
 const menuAction = async (
 	wrapper: Awaited<ReturnType<typeof mountWorkspace>>['wrapper'],
@@ -14,6 +15,27 @@ const menuAction = async (
 	await action.trigger('click');
 	await flushPromises();
 };
+
+it('saves edited multiline tasks without joining lines in persisted data', async () => {
+	const { wrapper, notes, storage } = await mountWorkspace('/entry/list');
+	notes.update('task', 'Купить хлеб\nКупить молоко');
+	await flushPromises();
+	const card = wrapper.get('[data-id="task"]');
+	await card.get('.folder__options').trigger('click');
+	await card
+		.findAll('[role="menuitem"]')
+		.find((item) => item.text() === 'Изменить')!
+		.trigger('click');
+	await flushPromises();
+	const editor = wrapper.get('dialog[open] textarea');
+	expect((editor.element as HTMLTextAreaElement).value).toBe('Купить хлеб\nКупить молоко');
+	await editor.setValue('Купить хлеб\nКупить молоко!');
+	await wrapper.get('dialog[open] form').trigger('submit');
+	await flushPromises();
+	expect(restoreNotes(storage).tasks.find((task) => task.id === 'task')?.value).toBe(
+		'Купить хлеб\nКупить молоко!',
+	);
+});
 
 it('switches the theme and keeps other user actions as placeholders', async () => {
 	const { wrapper, notes, router } = await mountWorkspace();

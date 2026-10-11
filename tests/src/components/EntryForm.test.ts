@@ -36,3 +36,30 @@ it('edits tasks through the input and preserves the original draft until save', 
 	await wrapper.get('form').trigger('submit');
 	expect(wrapper.emitted('save')?.[0]).toEqual(['Изменённая задача', '']);
 });
+
+it.each(['\n', '\r\n', '\r'])(
+	'preserves multiline task text when editing %j line breaks',
+	async (lineBreak) => {
+		const task = { ...fixture().tasks[0], value: 'Купить хлеб' + lineBreak + 'Купить молоко' };
+		const wrapper = mount(EntryForm, { props: { type: 'task', entry: task } });
+		const field = wrapper.get('textarea');
+		expect(wrapper.find('input').exists()).toBe(false);
+		expect(field.element.value).toBe('Купить хлеб\nКупить молоко');
+		await wrapper.get('form').trigger('submit');
+		expect(wrapper.emitted('save')?.[0]).toEqual([task.value, '']);
+		await field.setValue(field.element.value + '!');
+		await wrapper.get('form').trigger('submit');
+		expect(wrapper.emitted('save')?.[1]).toEqual(['Купить хлеб\nКупить молоко!', '']);
+		expect(task.value).toBe('Купить хлеб' + lineBreak + 'Купить молоко');
+	},
+);
+
+it('keeps the multiline editor while changing or removing line breaks in its draft', async () => {
+	const task = { ...fixture().tasks[0], value: 'Первая строка\nВторая строка' };
+	const wrapper = mount(EntryForm, { props: { type: 'task', entry: task } });
+	await wrapper.get('textarea').setValue('Одна строка');
+	expect(wrapper.find('input').exists()).toBe(false);
+	await wrapper.get('textarea').setValue('Новая строка\nЕщё одна');
+	await wrapper.get('form').trigger('submit');
+	expect(wrapper.emitted('save')?.[0]).toEqual(['Новая строка\nЕщё одна', '']);
+});

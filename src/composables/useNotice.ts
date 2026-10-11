@@ -84,9 +84,9 @@ const useNotice = () => {
 				record.type === 'attributes'
 					? record.target instanceof HTMLDialogElement
 					: [...record.addedNodes, ...record.removedNodes].some(
-						(node) =>
-							node instanceof Element && (node.matches('dialog') || node.querySelector('dialog')),
-					),
+							(node) =>
+								node instanceof Element && (node.matches('dialog') || node.querySelector('dialog')),
+						),
 			);
 			if (dialogChanged) void display();
 		});
