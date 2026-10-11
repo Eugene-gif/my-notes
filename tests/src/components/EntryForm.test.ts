@@ -15,12 +15,24 @@ it('keeps note edits as a draft until explicit save or cancel', async () => {
 	await wrapper.find('.btn-note-cancel').trigger('click');
 	expect(wrapper.emitted('cancel')).toHaveLength(1);
 });
-it('rejects blank tasks and accepts multiline tasks', async () => {
+it('uses a single-line input and rejects blank tasks', async () => {
 	const wrapper = mount(EntryForm, { props: { type: 'task' } });
-	await wrapper.find('textarea').setValue(' ');
+	expect(wrapper.find('textarea').exists()).toBe(false);
+	expect(wrapper.get('input').attributes('required')).toBeDefined();
+	await wrapper.find('input').setValue(' ');
 	await wrapper.find('form').trigger('submit');
 	expect(wrapper.emitted('save')).toBeUndefined();
-	await wrapper.find('textarea').setValue('Один\nДва');
+	await wrapper.find('input').setValue('Новая задача');
 	await wrapper.find('form').trigger('submit');
-	expect(wrapper.emitted('save')?.[0]).toEqual(['Один\nДва', '']);
+	expect(wrapper.emitted('save')?.[0]).toEqual(['Новая задача', '']);
+});
+
+it('edits tasks through the input and preserves the original draft until save', async () => {
+	const task = fixture().tasks[0];
+	const wrapper = mount(EntryForm, { props: { type: 'task', entry: task } });
+	expect(wrapper.get('input').element.value).toBe(task.value);
+	await wrapper.get('input').setValue('Изменённая задача');
+	expect(task.value).toBe('Купить молоко');
+	await wrapper.get('form').trigger('submit');
+	expect(wrapper.emitted('save')?.[0]).toEqual(['Изменённая задача', '']);
 });

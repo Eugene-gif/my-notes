@@ -27,9 +27,9 @@
 				: elementCount(getChildren(notes.state, props.entry.id).length),
 	);
 	const actions = computed<MenuAction[]>(() => [
+		{ id: props.entry.type === 'note' ? 'edit-note' : 'rename', label: 'Изменить' },
 		{ id: 'open', label: 'Открыть' },
 		{ id: 'select', label: 'Выбрать' },
-		{ id: props.entry.type === 'note' ? 'edit-note' : 'rename', label: 'Изменить' },
 		{ id: 'delete', label: 'Удалить ' + containerNoun(props.entry.type), danger: true },
 	]);
 

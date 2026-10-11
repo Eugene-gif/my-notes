@@ -27,13 +27,17 @@
 		font-size: 14px;
 		color: var(--color-gray);
 	}
+	.todo__batch-actions .button {
+		height: 30px;
+		padding: 4px 12px;
+	}
 	.todo__cancel {
 		background: var(--color-gray-light);
 		color: var(--color-gray-dark);
 	}
 	@media (max-width: 480px) {
 		.todo__batch-actions .button {
-			padding: 8px;
+			padding: 4px 8px;
 			font-size: 16px;
 		}
 		.todo__batch-actions {

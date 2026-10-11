@@ -98,7 +98,7 @@ it('cycles tasks, selects groups and adds top/bottom tasks', async () => {
 	await wrapper.find('.task__toggle').trigger('click');
 	expect(notes.state.tasks[0].status).toBe('in-progress');
 	await wrapper.find('.todo__add-task').trigger('click');
-	await wrapper.find('textarea').setValue('В начало');
+	await wrapper.find('input').setValue('В начало');
 	await wrapper.find('form').trigger('submit');
 	await flushPromises();
 	expect(wrapper.findAll('.task__text')[0].text()).toBe('В начало');
@@ -138,4 +138,32 @@ it('uses router navigation and returns to the parent after deleting a section', 
 	await wrapper.find('.todo__back').trigger('click');
 	await flushPromises();
 	expect(router.currentRoute.value.name).toBe('home');
+});
+
+it('opens the element picker from an empty folder and uses the edit label in its menu', async () => {
+	const { wrapper } = await mountWorkspace('/entry/nested');
+	expect(wrapper.get('.todo__list-empty').text()).toBe('Папка пуста');
+	await wrapper.get('.todo__empty-folder .button').trigger('click');
+	await flushPromises();
+	expect(wrapper.get('dialog[open] h2').text()).toBe('Добавить элемент');
+	await wrapper.get('dialog[open] .btn-modal-close').trigger('click');
+	await menuAction(wrapper, 'Изменить');
+	expect(wrapper.get<HTMLInputElement>('form input').element.value).toBe('Проект');
+});
+
+it('navigates into note editing without resetting the requested edit mode', async () => {
+	const { wrapper, router, notes } = await mountWorkspace();
+	const card = wrapper.get('[data-id="note"]');
+	await card.get('.folder__options').trigger('click');
+	await card
+		.findAll('[role="menuitem"]')
+		.find((item) => item.text() === 'Изменить')!
+		.trigger('click');
+	await flushPromises();
+	expect(router.currentRoute.value.params.id).toBe('note');
+	expect(wrapper.get('form label[for="entry-name"]').text()).toBe('Заголовок');
+	expect(wrapper.get('form textarea').attributes('placeholder')).toBe('Введите текст');
+	await wrapper.get('form input').setValue('Новый заголовок');
+	await wrapper.get('form').trigger('submit');
+	expect(notes.entry('note')).toMatchObject({ name: 'Новый заголовок' });
 });

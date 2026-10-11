@@ -33,7 +33,7 @@
 		:data-textarea-boundary="inline ? undefined : ''"
 		@submit.prevent="submit"
 	>
-		<AutoResizeTextarea
+		<Input
 			v-if="type === 'task'"
 			id="task-name"
 			v-model="name"
@@ -51,7 +51,7 @@
 						? 'Название папки'
 						: type === 'checklist'
 							? 'Название перечня'
-							: 'Название заметки'
+							: 'Заголовок'
 				"
 				autofocus
 			/>
@@ -62,7 +62,7 @@
 			id="note-description"
 			v-model="description"
 			label="Описание"
-			placeholder="Напишите заметку"
+			placeholder="Введите текст"
 		/>
 		<div class="actions task-actions">
 			<Button type="submit">{{ entry ? 'Сохранить' : 'Создать' }}</Button>

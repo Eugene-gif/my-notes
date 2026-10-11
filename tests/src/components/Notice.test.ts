@@ -14,6 +14,7 @@ it('announces errors, escapes messages and allows manual close', async () => {
 	expect(host.getAttribute('role')).toBe('alert');
 	expect(host.textContent).toContain('<img src=x>');
 	expect(host.querySelector('img')).toBeNull();
+	expect(host.querySelector('.notice__icon path')?.getAttribute('d')).toBe('m9 9 6 6m0-6-6 6');
 	(host.querySelector('button') as HTMLButtonElement).click();
 	vi.advanceTimersByTime(160);
 	await nextTick();

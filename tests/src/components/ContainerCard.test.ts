@@ -5,6 +5,26 @@ import ContainerCard from '@/components/ContainerCard.vue';
 import { useNotesStore } from '@/store/notesStore';
 import { fixture } from '../../fixtures';
 
+it.each(['folders', 'checklists', 'notes'] as const)(
+	'orders %s actions with editing first and deletion last',
+	async (collection) => {
+		const state = fixture();
+		useNotesStore().state = state;
+		const wrapper = mount(ContainerCard, { props: { entry: state[collection][0] } });
+		await wrapper.get('.folder__options').trigger('click');
+		expect(wrapper.findAll('[role="menuitem"]').map((item) => item.text())).toEqual([
+			'Изменить',
+			'Открыть',
+			'Выбрать',
+			collection === 'folders'
+				? 'Удалить папку'
+				: collection === 'checklists'
+					? 'Удалить перечень'
+					: 'Удалить заметку',
+		]);
+	},
+);
+
 it('renders container summaries safely and separates navigation from selection', async () => {
 	const state = fixture();
 	useNotesStore().state = state;

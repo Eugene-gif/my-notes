@@ -63,7 +63,7 @@
 		}
 
 		.text {
-			font-size: 16px;
+			font-size: 20px;
 			font-weight: 600;
 			margin-bottom: 20px;
 			user-select: none;
@@ -146,14 +146,14 @@
 		max-width: 480px;
 	}
 
-	.todo-modal:is(.note-modal, .textarea-modal) {
+	.todo-modal.note-modal {
 		max-height: calc(100dvh - 40px);
 		margin-top: 20px;
 		padding: 0;
 		overflow: hidden;
 	}
 
-	.todo-modal:is(.note-modal, .textarea-modal) .panel {
+	.todo-modal.note-modal .panel {
 		display: flex;
 		flex-direction: column;
 		max-height: calc(100dvh - 42px);
@@ -164,7 +164,7 @@
 		}
 	}
 
-	.todo-modal.textarea-modal {
+	.todo-modal.task-modal {
 		max-width: 500px;
 	}
 	.todo-modal.search-modal {

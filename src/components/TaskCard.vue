@@ -108,8 +108,8 @@
 		<ActionMenu
 			v-if="!selecting"
 			:actions="[
-				{ id: 'select', label: 'Выбрать' },
 				{ id: 'edit', label: 'Изменить' },
+				{ id: 'select', label: 'Выбрать' },
 				{ id: 'delete', label: 'Удалить', danger: true },
 			]"
 			:label="'Действия задачи «' + entry.value + '»'"

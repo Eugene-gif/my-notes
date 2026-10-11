@@ -1,6 +1,7 @@
 <script setup lang="ts">
 	import { useNotice } from '@/composables/useNotice';
 	import IconControl from '@/assets/icons/IconControl.vue';
+	import IconNotice from '@/assets/icons/IconNotice.vue';
 
 	withDefaults(defineProps<{ top?: string; width?: string }>(), { top: '20px', width: '460px' });
 	const { current, host, target, closing, entering, close } = useNotice();
@@ -21,9 +22,7 @@
 			:style="{ '--notice-top': top, '--notice-width': width }"
 		>
 			<div class="notice" @animationend.self="entering = false">
-				<span class="notice__icon" aria-hidden="true">
-					{{ current.status === 'success' ? '✓' : current.status === 'error' ? '✕' : 'ⓘ' }}
-				</span>
+				<IconNotice :status="current.status" />
 				<span class="notice__text">{{ current.message }}</span>
 				<button
 					v-if="current.closable"
@@ -71,9 +70,7 @@
 	}
 
 	.notice__icon {
-		display: grid;
-		place-items: center;
-		flex: 0 0 28px;
+		flex: 0 0 24px;
 		color: var(--notice-accent);
 	}
 

@@ -39,6 +39,10 @@ it('shows an empty folder and disables task insertion during selection', async (
 		},
 	});
 	expect(wrapper.text()).toContain('Папка пуста');
+	await wrapper.get('.todo__empty-folder .button').trigger('click');
+	expect(wrapper.emitted('add-entry')).toEqual([[]]);
+	await wrapper.setProps({ selecting: true });
+	expect(wrapper.get('.todo__empty-folder .button').attributes('disabled')).toBeDefined();
 	await wrapper.setProps({ checklist: true, selecting: true });
 	await wrapper.find('.todo__add-task').trigger('click');
 	expect(wrapper.emitted('add')).toBeUndefined();

@@ -2,39 +2,42 @@
 
 Компоненты лежат непосредственно в `src/components`: каждый `Name.vue` содержит шаблон, а при необходимости — `<script setup lang="ts">` и `<style scoped>`. Общие цвета, сброс и оформление документа — в `src/assets/styles/style.css`; правила карточек и элементов интерфейса принадлежат самим компонентам. Пользовательский текст выводится через интерполяцию Vue. Все интерфейсные SVG находятся в шаблонах компонентов Icon*.vue в `src/assets/icons`; цвет наследуется через currentColor, размер задаёт родительский класс или атрибуты SVG.
 
-| Компонент          | Основная ответственность и контракт                                                                                                  |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| NotesWorkspace     | Собирает экран, соединяет Router и stores, управляет формами и подтверждениями.                                                      |
-| EntryList          | Выводит элементы с ключом id и раскладкой. В перечне принудительно одна колонка; события add передают before/after.                  |
-| TaskCard           | Текст, статус и разворачивание задачи; toggle, select, action передают id. Не сохраняет данные самостоятельно.                       |
-| ContainerCard      | Карточка папки, перечня или заметки; статистика и иконка. События open, select, action.                                              |
-| ActionMenu         | Меню действий; props actions, label, toolbar; события action и open-change. Поддерживает Escape, стрелки, Home/End и возврат фокуса. |
-| Breadcrumbs        | Путь раздела и кнопка назад; при переполнении показывает полный путь в диалоге. navigate передаёт id или null.                       |
-| NoteView           | Чтение заметки или редактор; edit, cancel, save.                                                                                     |
-| EntryForm          | Локальный черновик создания/редактирования; props type, entry, inline; save(name, description), cancel. Пустая задача запрещена.     |
-| BaseDialog         | Нативный dialog; v-model управляет открытием, title задаёт доступное имя. Закрытие крестиком, Escape или по фону. Контент — slot.    |
-| AddEntryPicker     | Выбор папки, заметки или перечня; choose(type).                                                                                      |
-| LayoutPicker       | Выбор 1/2/3 колонок через v-model.                                                                                                   |
-| SearchDialog       | Поиск с задержкой 300 мс; v-model, currentId; navigate(entry). В перечне ищет только его задачи.                                     |
-| HighlightText      | Вывод текста с mark для совпадений; props text, query. Не интерпретирует HTML пользователя.                                          |
-| SelectionToolbar   | Счётчик выбранных и групповые действия; count, total; all, remove, cancel.                                                           |
-| DropActionMenu     | Выбор переноса в папку или обмена; pending; choose(move/swap), cancel. Проверяет допустимость операций.                              |
-| Notice             | Единственное глобальное уведомление; props top и width. Использует noticesStore и useNotice.                                         |
-| AppUpdatePrompt    | Постоянное предложение обновить приложение, защита несохранённых форм и диалог с инструкцией установки. Получает PWA_KEY из App.     |
-| Button             | Базовая кнопка со slot; type, disabled, danger. Остальные атрибуты и события передаются кнопке.                                      |
-| Input              | Подписанное текстовое поле; id, label, type, placeholder, required, autofocus; строковый v-model.                                    |
-| IconContainer      | Выбирает иконку папки, перечня или заметки; props entry, open. Реагирует на дочерние элементы и статусы из notesStore.               |
-| IconFolder         | Четыре варианта папки через булевы props open и empty.                                                                               |
-| IconTasks          | Иконка перечня со статусом empty, partial или complete.                                                                              |
-| IconTaskStatus     | Иконка задачи для in-progress и completed; pending не выводит SVG.                                                                   |
-| IconMenu           | Иконка действия или типа раздела; типизированный prop name.                                                                          |
-| IconHome           | Иконка главной страницы.                                                                                                             |
-| IconText           | Иконка заметки.                                                                                                                      |
-| IconControl        | SVG-кнопки меню, дополнительных действий, закрытия и возврата; типизированный prop name.                                             |
-| IconChevronDown    | Стрелка разворачивания задачи; поворот задаёт TaskCard.                                                                              |
-| AutoResizeTextarea | Подписанное многострочное поле с v-model; растёт до границы экрана/формы; expose resize().                                           |
+| Компонент          | Основная ответственность и контракт                                                                                                          |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| NotesWorkspace     | Собирает экран, соединяет Router и stores, управляет формами и подтверждениями.                                                              |
+| EntryList          | Выводит элементы с ключом id и раскладкой. В перечне одна колонка; add передаёт before/after, add-entry открывает добавление в пустой папке. |
+| TaskCard           | Текст, статус и разворачивание задачи; toggle, select, action передают id. Не сохраняет данные самостоятельно.                               |
+| ContainerCard      | Карточка папки, перечня или заметки; статистика и иконка. События open, select, action.                                                      |
+| ActionMenu         | Меню действий; props actions, label, toolbar; события action и open-change. Поддерживает Escape, стрелки, Home/End и возврат фокуса.         |
+| Breadcrumbs        | Путь раздела и кнопка назад; при переполнении показывает полный путь в диалоге. navigate передаёт id или null.                               |
+| NoteView           | Чтение заметки или редактор; edit, cancel, save.                                                                                             |
+| EntryForm          | Черновик создания/редактирования; save(name, description), cancel. Для задачи — input с отправкой по Enter, для текста заметки — textarea.   |
+| BaseDialog         | Нативный dialog; v-model управляет открытием, title задаёт доступное имя. Закрытие крестиком, Escape или по фону. Контент — slot.            |
+| AddEntryPicker     | Выбор папки, заметки или перечня; choose(type).                                                                                              |
+| LayoutPicker       | Выбор 1/2/3 колонок через v-model.                                                                                                           |
+| SearchDialog       | Поиск с задержкой 300 мс; v-model, currentId; navigate(entry). В перечне ищет только его задачи.                                             |
+| HighlightText      | Вывод текста с mark для совпадений; props text, query. Не интерпретирует HTML пользователя.                                                  |
+| SelectionToolbar   | Счётчик выбранных и групповые действия; count, total; all, remove, cancel.                                                                   |
+| DropActionMenu     | Выбор переноса в папку или обмена; pending; choose(move/swap), cancel. Проверяет допустимость операций.                                      |
+| Notice             | Единственное глобальное уведомление; props top и width. Использует noticesStore и useNotice.                                                 |
+| AppUpdatePrompt    | Постоянное предложение обновить приложение, защита несохранённых форм и диалог с инструкцией установки. Получает PWA_KEY из App.             |
+| Button             | Базовая кнопка со slot; type, disabled, danger. Остальные атрибуты и события передаются кнопке.                                              |
+| Input              | Подписанное текстовое поле; id, label, type, placeholder, required, autofocus; строковый v-model.                                            |
+| IconContainer      | Выбирает иконку папки, перечня или заметки; props entry, open. Реагирует на дочерние элементы и статусы из notesStore.                       |
+| IconFolder         | Четыре варианта папки через булевы props open и empty.                                                                                       |
+| IconTasks          | Иконка перечня со статусом empty, partial или complete.                                                                                      |
+| IconTaskStatus     | Иконка задачи для in-progress и completed; pending не выводит SVG.                                                                           |
+| IconMenu           | Иконка действия или типа раздела; типизированный prop name.                                                                                  |
+| IconNotice         | Иконки success, info и error в едином стиле: круг с галочкой, информационным знаком или крестиком.                                           |
+| IconHome           | Иконка главной страницы.                                                                                                                     |
+| IconText           | Иконка заметки.                                                                                                                              |
+| IconControl        | SVG-кнопки меню, дополнительных действий, закрытия и возврата; типизированный prop name.                                                     |
+| IconChevronDown    | Стрелка разворачивания задачи; поворот задаёт TaskCard.                                                                                      |
+| AutoResizeTextarea | Подписанное многострочное поле с v-model; растёт до границы экрана/формы; expose resize().                                                   |
 
 TaskCard использует useTaskExpansion: высота плавно меняется между 64 px и полной высотой текста. Повторное нажатие разворачивает анимацию с текущей высоты; при prefers-reduced-motion переход выполняется сразу. Анимация освобождается после завершения и при демонтаже.
+
+NotesWorkspace анимирует смену содержимого раздела, сохраняя шапку на месте. При prefers-reduced-motion переход выполняется сразу.
 
 ActionMenu через useMenu выбирает открытие вниз или вверх по свободному месту на экране. Если меню целиком не помещается с обеих сторон, используется более свободная сторона и внутренняя прокрутка. Положение обновляется при прокрутке, изменении размеров меню и видимой области экрана.
 
