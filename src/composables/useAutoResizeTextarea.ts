@@ -3,6 +3,7 @@ import { onMounted, onScopeDispose, watch, nextTick, type Ref } from 'vue';
 const useAutoResizeTextarea = (field: Ref<HTMLTextAreaElement | null>, value: Ref<string>) => {
 	let observer: ResizeObserver | undefined;
 	let lastWidth = -1;
+	let frame: number | undefined;
 
 	const resize = () => {
 		const area = field.value;
@@ -51,7 +52,11 @@ const useAutoResizeTextarea = (field: Ref<HTMLTextAreaElement | null>, value: Re
 			const width = entries[0]?.contentRect.width;
 			if (width !== undefined && width !== lastWidth) {
 				lastWidth = width;
-				resize();
+				if (frame !== undefined) cancelAnimationFrame(frame);
+				frame = requestAnimationFrame(() => {
+					frame = undefined;
+					resize();
+				});
 			}
 		});
 		if (field.value) observer.observe(field.value);
@@ -60,6 +65,7 @@ const useAutoResizeTextarea = (field: Ref<HTMLTextAreaElement | null>, value: Re
 		resize();
 	});
 	onScopeDispose(() => {
+		if (frame !== undefined) cancelAnimationFrame(frame);
 		observer?.disconnect();
 		window.removeEventListener('resize', resize);
 		window.visualViewport?.removeEventListener('resize', resize);

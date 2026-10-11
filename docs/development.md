@@ -61,6 +61,15 @@ Oxlint проверяет script Vue, но не полноценные template-
 
 jsdom не проверяет реальную геометрию, касания и верхний слой браузера. Дополнительно проверяйте приложение в браузере: CRUD всех типов; три статуса; поиск и переход; назад/вперёд и перезагрузка прямого адреса; мышь/касание и переносы; экраны 320/390 px; большие тексты и видимость кнопок; уведомления поверх модальных окон. Используйте отдельный browser context для тестовых данных.
 
+`tests/src/components/EntryForm.browser.js` проверяет редактирование многострочной задачи с подзадачами на экранах 640×360, 320×480 и 1024×768. Сценарий создаёт отдельный контекст браузера, проверяет касания, добавление, удаление, сохранение и перезагрузку. Он запускается отдельно от Vitest через доступный Playwright CLI; новых зависимостей проекта не требует. В первом терминале запустите `npm run dev -- --host 127.0.0.1 --port 4174 --strictPort`, во втором — PowerShell-команды:
+
+```powershell
+playwright-cli -s=entry-form open http://127.0.0.1:4174/ --browser chrome
+$entryFormCheck = (Get-Content tests/src/components/EntryForm.browser.js -Raw).Replace('export default ', '').Trim().TrimEnd(';')
+playwright-cli -s=entry-form run-code $entryFormCheck
+playwright-cli -s=entry-form close
+```
+
 ## Хостинг
 
 PWA проверяется на production-сборке через npm run preview; в dev service worker отключён. Установка, офлайн-навигация и обновление двух версий требуют настоящего браузера. Настройки и сценарии: [pwa.md](pwa.md).

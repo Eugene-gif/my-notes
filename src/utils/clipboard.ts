@@ -54,18 +54,30 @@ const canPasteClipboard = (state: NotesState, clipboard: EntryClipboard, parentI
 
 const pasteClipboard = (state: NotesState, clipboard: EntryClipboard, parentId: ParentId) => {
 	if (!canPasteClipboard(state, clipboard, parentId)) return false;
-	const usedIds = new Set([...allEntries(state), ...clipboard.entries].map((entry) => entry.id));
-	const replacements = new Map<string, string>();
-	clipboard.entries.forEach((entry) => {
+	const entries = [...allEntries(state), ...clipboard.entries];
+	const usedIds = new Set(
+		entries.flatMap((entry) => [
+			entry.id,
+			...(entry.type === 'task' ? (entry.subtasks ?? []).map((subtask) => subtask.id) : []),
+		]),
+	);
+	const createId = () => {
 		let id = crypto.randomUUID();
 		while (usedIds.has(id)) id = crypto.randomUUID();
 		usedIds.add(id);
-		replacements.set(entry.id, id);
+		return id;
+	};
+	const replacements = new Map<string, string>();
+	clipboard.entries.forEach((entry) => {
+		replacements.set(entry.id, createId());
 	});
 	const order = (getChildren(state, parentId).at(-1)?.order ?? -1) + 1;
 	const roots = new Map(clipboard.rootIds.map((id, index) => [id, index]));
 	const copies = structuredClone(clipboard.entries).map((entry) => {
 		const index = roots.get(entry.id);
+		if (entry.type === 'task' && entry.subtasks) {
+			entry.subtasks = entry.subtasks.map((subtask) => ({ ...subtask, id: createId() }));
+		}
 		return {
 			...entry,
 			id: replacements.get(entry.id)!,

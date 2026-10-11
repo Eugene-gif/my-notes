@@ -5,6 +5,7 @@
 	import IconTaskStatus from '@/assets/icons/IconTaskStatus.vue';
 	import IconChevronDown from '@/assets/icons/IconChevronDown.vue';
 	import ActionMenu from '@/components/ActionMenu.vue';
+	import SubtaskCard from '@/components/SubtaskCard.vue';
 	import { useTaskExpansion } from '@/composables/useTaskExpansion';
 
 	const props = defineProps<{
@@ -15,6 +16,7 @@
 	}>();
 	const emit = defineEmits<{
 		toggle: [id: string];
+		'toggle-subtask': [id: string, subtaskId: string];
 		select: [id: string];
 		action: [action: string, id: string];
 	}>();
@@ -26,6 +28,7 @@
 	const singleLine = ref(false);
 	const menuOpen = ref(false);
 	const status = computed(() => props.entry.status);
+	const hasSubtasks = computed(() => !!props.entry.subtasks?.length);
 	let observer: ResizeObserver | undefined;
 
 	const measure = () => {
@@ -35,8 +38,12 @@
 	};
 
 	watch(
-		() => props.entry.value,
-		() => nextTick(measure),
+		() => [props.entry.value, props.entry.subtasks?.length],
+		() =>
+			nextTick(() => {
+				measure();
+				if (!clipped.value && !hasSubtasks.value) expanded.value = false;
+			}),
 	);
 	onMounted(() => {
 		observer = new ResizeObserver(measure);
@@ -45,12 +52,15 @@
 	});
 	onScopeDispose(() => observer?.disconnect());
 
-	const activate = () =>
-		props.selecting ? emit('select', props.entry.id) : emit('toggle', props.entry.id);
-
 	const expand = () => {
 		void toggle();
 		toggleButton.value?.focus({ preventScroll: true });
+	};
+
+	const activate = () => {
+		if (props.selecting) emit('select', props.entry.id);
+		else if (hasSubtasks.value) expand();
+		else emit('toggle', props.entry.id);
 	};
 </script>
 
@@ -71,37 +81,69 @@
 		:data-completed="status === 'completed'"
 		@click="activate"
 	>
-		<button
-			v-if="selecting"
-			type="button"
-			class="item__selection"
-			:aria-pressed="!!selected"
-			:aria-label="'Выбрать ' + entry.value"
-			@click.stop="emit('select', entry.id)"
-		>
-			{{ selected ? '✔' : '' }}
-		</button>
-		<button
-			ref="toggleButton"
-			type="button"
-			class="task__toggle"
-			:aria-pressed="status === 'in-progress' ? 'mixed' : status === 'completed'"
-			:aria-label="
-				entry.value + '. Статус: ' + taskStatusLabel(status) + '. Изменить статус задачи'
-			"
-			@click.stop="activate"
-		>
-			<IconTaskStatus class="task__check" :status="status" />
-			<span
-				ref="text"
-				class="task__text item__text"
-				:class="{ 'is-clipped': clipped && !expanded }"
+		<div class="task__header">
+			<button
+				v-if="selecting"
+				type="button"
+				class="item__selection"
+				:aria-pressed="!!selected"
+				:aria-label="'Выбрать ' + entry.value"
+				@click.stop="emit('select', entry.id)"
 			>
-				{{ entry.value }}
-			</span>
-		</button>
+				{{ selected ? '✔' : '' }}
+			</button>
+			<button
+				ref="toggleButton"
+				type="button"
+				class="task__toggle"
+				:aria-expanded="hasSubtasks && !selecting ? expanded : undefined"
+				:aria-pressed="
+					hasSubtasks ? undefined : status === 'in-progress' ? 'mixed' : status === 'completed'
+				"
+				:aria-label="
+					entry.value +
+					'. Статус: ' +
+					taskStatusLabel(status) +
+					(selecting
+						? '. Выбрать задачу'
+						: hasSubtasks
+							? '. Статус определяется подзадачами. ' +
+								(expanded ? 'Свернуть задачу' : 'Развернуть задачу')
+							: '. Изменить статус задачи')
+				"
+				@click.stop="activate"
+			>
+				<IconTaskStatus class="task__check" :status="status" />
+				<span
+					ref="text"
+					class="task__text item__text"
+					:class="{ 'is-clipped': clipped && !expanded }"
+				>
+					{{ entry.value }}
+				</span>
+			</button>
+			<ActionMenu
+				v-if="!selecting"
+				:actions="[
+					{ id: 'edit', label: 'Изменить' },
+					{ id: 'select', label: 'Выбрать', disabled: selectionDisabled },
+					{ id: 'delete', label: 'Удалить', danger: true },
+				]"
+				:label="'Действия задачи «' + entry.value + '»'"
+				@action="(action) => emit('action', action, entry.id)"
+				@open-change="menuOpen = $event"
+			/>
+		</div>
+		<ul v-if="hasSubtasks" class="task__subtasks" aria-label="Подзадачи">
+			<SubtaskCard
+				v-for="subtask in entry.subtasks"
+				:key="subtask.id"
+				:entry="subtask"
+				@toggle="(id) => emit('toggle-subtask', entry.id, id)"
+			/>
+		</ul>
 		<button
-			v-if="clipped && !selecting"
+			v-if="(clipped || hasSubtasks) && !selecting"
 			class="task__expand"
 			type="button"
 			:aria-label="expanded ? 'Свернуть задачу' : 'Развернуть задачу'"
@@ -110,17 +152,6 @@
 		>
 			<IconChevronDown />
 		</button>
-		<ActionMenu
-			v-if="!selecting"
-			:actions="[
-				{ id: 'edit', label: 'Изменить' },
-				{ id: 'select', label: 'Выбрать', disabled: selectionDisabled },
-				{ id: 'delete', label: 'Удалить', danger: true },
-			]"
-			:label="'Действия задачи «' + entry.value + '»'"
-			@action="(action) => emit('action', action, entry.id)"
-			@open-change="menuOpen = $event"
-		/>
 	</li>
 </template>
 
@@ -147,6 +178,7 @@
 	}
 
 	.task {
+		display: block;
 		position: relative;
 		padding: 10px 14px;
 		align-items: center;
@@ -203,6 +235,29 @@
 				background: var(--color-yellow-light);
 			}
 		}
+	}
+
+	.task__header {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		min-height: calc(var(--card-height) - 22px);
+	}
+	.task:is(.is-expanded, .is-animating) .task__header {
+		align-items: flex-start;
+	}
+	.task.is-single-line .task__toggle {
+		align-self: center;
+	}
+	.task__subtasks {
+		display: grid;
+		gap: 6px;
+		margin: 10px 0 0 40px;
+		list-style: none;
+	}
+	.task:not(.is-expanded):not(.is-animating) .task__subtasks,
+	.task.is-selecting .task__subtasks {
+		display: none;
 	}
 
 	.task__toggle {

@@ -1,7 +1,7 @@
 import { expect, it, vi } from 'vitest';
 import { createClipboard, canPasteClipboard, pasteClipboard } from '@/utils/clipboard';
 import { allEntries, getChildren } from '@/utils/entries';
-import { fixture } from '../../fixtures';
+import { fixture, subtasksFixture } from '../../fixtures';
 
 it('snapshots complete trees, deduplicates descendants and rejects missing selections', () => {
 	const state = fixture();
@@ -124,6 +124,21 @@ it('avoids ID collisions with originals and other newly created entries', () => 
 	expect(new Set(allEntries(state).map((entry) => entry.id)).size).toBe(allEntries(state).length);
 });
 
+it('also rejects UUID collisions with subtask IDs when generating copies', () => {
+	const state = fixture();
+	state.tasks[0].subtasks = subtasksFixture();
+	const clipboard = createClipboard(state, ['task'])!;
+	const randomUUID = crypto.randomUUID.bind(crypto);
+	vi.spyOn(crypto, 'randomUUID')
+		.mockReturnValueOnce('subtask1' as ReturnType<typeof crypto.randomUUID>)
+		.mockImplementation(randomUUID);
+	expect(pasteClipboard(state, clipboard, 'other')).toBe(true);
+	const copy = state.tasks.at(-1)!;
+	expect(copy.id).not.toBe('subtask1');
+	expect(copy.subtasks?.map((subtask) => subtask.id)).not.toContain('subtask1');
+	expect(copy.subtasks?.map((subtask) => subtask.id)).not.toContain('subtask2');
+});
+
 it('traverses deeply nested folders without recursive stack growth', () => {
 	const state = fixture();
 	for (let index = 0; index < 3000; index++)
@@ -137,4 +152,43 @@ it('traverses deeply nested folders without recursive stack growth', () => {
 	const clipboard = createClipboard(state, ['folder'])!;
 	expect(clipboard.entries).toHaveLength(3004);
 	expect(pasteClipboard(state, clipboard, null)).toBe(true);
+});
+
+it.each([
+	['task', 'other'],
+	['list', null],
+	['folder', null],
+])('deep copies %s including subtask IDs, text and statuses', (id, destination) => {
+	const state = fixture();
+	state.tasks.forEach((task) => {
+		task.subtasks = subtasksFixture().map((subtask) => ({
+			...subtask,
+			id: task.id + '-' + subtask.id,
+		}));
+		task.subtasks[0].status = 'completed';
+		task.subtasks[0].completed = true;
+		task.status = 'in-progress';
+	});
+	const original = structuredClone(state);
+	const clipboard = createClipboard(state, [id!])!;
+	expect(pasteClipboard(state, clipboard, destination)).toBe(true);
+	const originalIds = new Set(allEntries(original).map((entry) => entry.id));
+	const copies = state.tasks.filter((task) => !originalIds.has(task.id));
+	expect(copies.length).toBeGreaterThan(0);
+	const ids = allEntries(state).flatMap((entry) => [
+		entry.id,
+		...(entry.type === 'task' ? (entry.subtasks ?? []).map((subtask) => subtask.id) : []),
+	]);
+	expect(new Set(ids).size).toBe(ids.length);
+	for (const copy of copies) {
+		const source = original.tasks.find((task) => task.value === copy.value)!;
+		expect(copy.subtasks?.map(({ id: _id, ...subtask }) => subtask)).toEqual(
+			source.subtasks?.map(({ id: _id, ...subtask }) => subtask),
+		);
+		expect(copy.status).toBe(source.status);
+		copy.subtasks![0].value = 'Другой текст';
+		copy.subtasks![0].status = 'pending';
+	}
+	expect(state.tasks.filter((task) => originalIds.has(task.id))).toEqual(original.tasks);
+	expect(clipboard).toEqual(createClipboard(original, [id!]));
 });

@@ -195,7 +195,9 @@ const useDragAndDrop = (root: Ref<HTMLElement | null>, options: DragAndDropOptio
 			const card = event.target.closest<HTMLElement>('.todo__item');
 			if (
 				!card ||
-				event.target.closest('input,textarea,.folder__options,.folder__menu,.task__expand')
+				event.target.closest(
+					'input,textarea,.folder__options,.folder__menu,.task__expand,[data-no-drag]',
+				)
 			)
 				return;
 			const entry = options.getEntry(card.dataset.id ?? null);

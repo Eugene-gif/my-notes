@@ -7,12 +7,13 @@ import type {
 	NotesState,
 	ParentId,
 	StorageLike,
+	Subtask,
 } from '@/types/notes';
 import { browserStorage } from '@/utils/storage';
 import { restoreNotes, persistNotes } from '@/utils/persistence';
 import { getEntry, nextOrder, placeEntries, swapEntries, deleteEntries } from '@/utils/entries';
 import { formatFolderName } from '@/utils/format';
-import { advanceTaskStatus } from '@/utils/taskStatus';
+import { advanceTaskStatus, syncTaskStatus } from '@/utils/taskStatus';
 import { useNoticesStore } from './noticesStore';
 import { createEmptyState } from '@/utils/normalizeState';
 import { pasteClipboard } from '@/utils/clipboard';
@@ -52,6 +53,7 @@ export const useNotesStore = defineStore('notes', () => {
 		name: string,
 		description = '',
 		position: 'before' | 'after' = 'after',
+		subtasks: Subtask[] = [],
 	): string | null => {
 		const id = crypto.randomUUID();
 		const success = commit((draft) => {
@@ -64,7 +66,7 @@ export const useNotesStore = defineStore('notes', () => {
 				return false;
 			const order = nextOrder(draft);
 			if (type === 'task') {
-				if (!name.trim()) return false;
+				if (!name.trim() || subtasks.some((subtask) => !subtask.value.trim())) return false;
 				draft.tasks.push({
 					id,
 					type,
@@ -73,7 +75,9 @@ export const useNotesStore = defineStore('notes', () => {
 					status: 'pending',
 					parentId,
 					order,
+					subtasks: subtasks.map((subtask) => ({ ...subtask, value: subtask.value.trim() })),
 				});
+				syncTaskStatus(draft.tasks.at(-1)!);
 				if (position === 'before') {
 					const first = draft.tasks
 						.filter((task) => task.parentId === parentId && task.id !== id)
@@ -93,12 +97,17 @@ export const useNotesStore = defineStore('notes', () => {
 		return success ? id : null;
 	};
 
-	const update = (id: string, name: string, description = '') => {
+	const update = (id: string, name: string, description = '', subtasks?: Subtask[]) => {
 		return commit((draft) => {
 			const entry = getEntry(draft, id);
 			if (!entry || (entry.type === 'task' && !name.trim())) return false;
-			if (entry.type === 'task') entry.value = name.trim();
-			else entry.name = name.trim() || formatFolderName();
+			if (entry.type === 'task') {
+				if (subtasks?.some((subtask) => !subtask.value.trim())) return false;
+				entry.value = name.trim();
+				if (subtasks)
+					entry.subtasks = subtasks.map((subtask) => ({ ...subtask, value: subtask.value.trim() }));
+				syncTaskStatus(entry);
+			} else entry.name = name.trim() || formatFolderName();
 			if (entry.type === 'note') entry.description = description;
 
 			return true;
@@ -108,12 +117,23 @@ export const useNotesStore = defineStore('notes', () => {
 	const toggleTask = (id: string) => {
 		return commit((draft) => {
 			const task = getEntry(draft, id);
-			if (task?.type !== 'task') return false;
+			if (task?.type !== 'task' || task.subtasks?.length) return false;
 			advanceTaskStatus(task);
 
 			return true;
 		}, 'Статус задачи изменён.');
 	};
+
+	const toggleSubtask = (id: string, subtaskId: string) =>
+		commit((draft) => {
+			const task = getEntry(draft, id);
+			if (task?.type !== 'task') return false;
+			const subtask = task.subtasks?.find((item) => item.id === subtaskId);
+			if (!subtask) return false;
+			advanceTaskStatus(subtask);
+			syncTaskStatus(task);
+			return true;
+		}, 'Статус подзадачи изменён.');
 
 	const remove = (ids: string[]) =>
 		commit((draft) => deleteEntries(draft, ids), 'Элементы удалены.');
@@ -143,6 +163,7 @@ export const useNotesStore = defineStore('notes', () => {
 		create,
 		update,
 		toggleTask,
+		toggleSubtask,
 		remove,
 		move,
 		swap,
