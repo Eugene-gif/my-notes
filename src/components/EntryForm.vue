@@ -54,28 +54,31 @@
 <template>
 	<form
 		class="note-editor"
-		:class="{ 'entry-form-modal': !inline }"
-		:data-textarea-boundary="inline ? undefined : ''"
+		:class="{ 'entry-form-modal': !inline, 'entry-form-task': !inline && type === 'task' }"
+		:data-textarea-boundary="inline || type === 'task' ? undefined : ''"
 		@submit.prevent="submit"
 	>
-		<AutoResizeTextarea
-			v-if="type === 'task' && multilineTask"
-			id="task-name"
-			v-model="name"
-			label="Текст задачи"
-			placeholder="Добавить задачу"
-			required
-			autofocus
-		/>
-		<Input
-			v-else-if="type === 'task'"
-			id="task-name"
-			v-model="name"
-			label="Текст задачи"
-			placeholder="Добавить задачу"
-			required
-			autofocus
-		/>
+		<div v-if="type === 'task'" class="task-fields">
+			<AutoResizeTextarea
+				v-if="multilineTask"
+				id="task-name"
+				v-model="name"
+				label="Текст задачи"
+				placeholder="Добавить задачу"
+				required
+				autofocus
+			/>
+			<Input
+				v-else
+				id="task-name"
+				v-model="name"
+				label="Текст задачи"
+				placeholder="Добавить задачу"
+				required
+				autofocus
+			/>
+			<SubtaskEditor v-model="subtasks" />
+		</div>
 		<template v-else>
 			<Input
 				id="entry-name"
@@ -91,7 +94,6 @@
 			/>
 			<p class="folder-name-hint">Без названия: {{ fallbackName }}</p>
 		</template>
-		<SubtaskEditor v-if="type === 'task'" v-model="subtasks" />
 		<AutoResizeTextarea
 			v-if="type === 'note'"
 			id="note-description"
@@ -120,10 +122,14 @@
 		min-height: min(180px, var(--textarea-available-height, 180px));
 		max-height: var(--textarea-available-height, 100dvh);
 	}
-	.entry-form-modal :deep(.subtask-editor) {
+	.entry-form-task .task-fields {
 		flex: 1 1 auto;
 		min-height: 0;
 		overflow-y: auto;
+	}
+	.entry-form-task :deep(.note-description) {
+		min-height: 80px;
+		max-height: 180px;
 	}
 
 	.note-editor :deep(.input__field + .modal-label) {
