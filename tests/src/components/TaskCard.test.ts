@@ -29,3 +29,14 @@ it('emits status changes and selection with accessible status labels', async () 
 	await wrapper.find('.task__toggle').trigger('click');
 	expect(wrapper.emitted('select')?.[0]).toEqual(['task']);
 });
+
+it('disables new selection while a clipboard is pending', async () => {
+	const wrapper = mount(TaskCard, {
+		props: { entry: fixture().tasks[0], selectionDisabled: true },
+	});
+	await wrapper.get('.folder__options').trigger('click');
+	const select = wrapper.findAll('[role="menuitem"]').find((item) => item.text() === 'Выбрать')!;
+	expect(select.attributes('disabled')).toBeDefined();
+	await select.trigger('click');
+	expect(wrapper.emitted('action')).toBeUndefined();
+});

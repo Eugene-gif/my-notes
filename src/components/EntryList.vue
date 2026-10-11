@@ -13,9 +13,11 @@
 		checklist: boolean;
 		layout: Layout;
 		selecting: boolean;
+		selectionDisabled?: boolean;
 		selected: Set<string>;
 		highlight?: string;
 	}>();
+
 	const emit = defineEmits<{
 		toggle: [id: string];
 		select: [id: string];
@@ -24,6 +26,7 @@
 		add: [position: 'before' | 'after'];
 		'add-entry': [];
 	}>();
+	
 	const list = ref<HTMLElement | null>(null);
 	const version = computed(() => [props.entries, props.layout]);
 	useCardLayout(list, version);
@@ -52,6 +55,7 @@
 				v-if="entry.type === 'task'"
 				:entry="entry"
 				:selecting="selecting"
+				:selection-disabled="selectionDisabled"
 				:selected="selected.has(entry.id)"
 				:class="{ 'is-search-result': highlight === entry.id }"
 				@toggle="emit('toggle', $event)"
@@ -62,6 +66,7 @@
 				v-else
 				:entry="entry"
 				:selecting="selecting"
+				:selection-disabled="selectionDisabled"
 				:selected="selected.has(entry.id)"
 				@open="emit('open', $event)"
 				@select="emit('select', $event)"

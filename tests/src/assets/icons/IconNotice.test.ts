@@ -16,4 +16,7 @@ it('uses the same circle and changes the status symbol reactively', async () => 
 	await wrapper.setProps({ status: 'error' });
 	expect(wrapper.get('circle').element).toBe(circle);
 	expect(wrapper.get('path').attributes('d')).toBe('m9 9 6 6m0-6-6 6');
+	await wrapper.setProps({ status: 'warning' });
+	expect(wrapper.get('circle').element).toBe(circle);
+	expect(wrapper.get('path').attributes('d')).toBe('M12 8v4m0 4h0');
 });

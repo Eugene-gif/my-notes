@@ -47,3 +47,18 @@ it('shows checklist completion and direct folder children', () => {
 	const folder = mount(ContainerCard, { props: { entry: state.folders[0] } });
 	expect(folder.text()).toContain('2 элемента');
 });
+
+it('disables selection while a clipboard is awaiting paste without disabling navigation', async () => {
+	const state = fixture();
+	useNotesStore().state = state;
+	const wrapper = mount(ContainerCard, {
+		props: { entry: state.folders[0], selectionDisabled: true },
+	});
+	await wrapper.get('.folder__options').trigger('click');
+	const select = wrapper.findAll('[role="menuitem"]').find((item) => item.text() === 'Выбрать')!;
+	expect(select.attributes('disabled')).toBeDefined();
+	await select.trigger('click');
+	expect(wrapper.emitted('action')).toBeUndefined();
+	await wrapper.get('.folder__open').trigger('click');
+	expect(wrapper.emitted('open')?.[0]).toEqual(['folder']);
+});

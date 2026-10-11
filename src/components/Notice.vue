@@ -152,6 +152,9 @@
 		--notice-info: var(--color-blue);
 		--notice-info-bg: var(--color-blue-light);
 		--notice-info-border: var(--color-blue-border);
+		--notice-warning: var(--color-yellow);
+		--notice-warning-bg: var(--color-yellow-light);
+		--notice-warning-border: var(--color-yellow-border);
 		--notice-accent: var(--notice-info);
 		--notice-bg: var(--notice-info-bg);
 		--notice-border: var(--notice-info-border);
@@ -167,5 +170,10 @@
 		--notice-accent: var(--notice-error);
 		--notice-bg: var(--notice-error-bg);
 		--notice-border: var(--notice-error-border);
+	}
+	.notice-host[data-status='warning'] {
+		--notice-accent: var(--notice-warning);
+		--notice-bg: var(--notice-warning-bg);
+		--notice-border: var(--notice-warning-border);
 	}
 </style>

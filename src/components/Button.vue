@@ -36,13 +36,13 @@
 		user-select: none;
 
 		@media (hover: hover) {
-			&:hover {
+			&:hover:not(:disabled):not([aria-disabled='true']) {
 				background-color: var(--color-button-hover);
 				border-color: var(--color-button-hover);
 			}
 		}
 
-		&:active {
+		&:active:not(:disabled):not([aria-disabled='true']) {
 			filter: drop-shadow(0 0px 4px var(--color-yellow));
 		}
 
@@ -60,7 +60,8 @@
 		background: var(--color-red-light);
 		border-color: var(--color-red-border);
 	}
-	button:disabled {
+	button:disabled,
+	button[aria-disabled='true'] {
 		opacity: 0.45;
 		cursor: default;
 	}

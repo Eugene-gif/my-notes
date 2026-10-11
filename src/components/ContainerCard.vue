@@ -7,7 +7,12 @@
 	import { elementCount, taskCount, containerNoun } from '@/utils/format';
 	import ActionMenu from '@/components/ActionMenu.vue';
 
-	const props = defineProps<{ entry: Container; selecting?: boolean; selected?: boolean }>();
+	const props = defineProps<{
+		entry: Container;
+		selecting?: boolean;
+		selected?: boolean;
+		selectionDisabled?: boolean;
+	}>();
 	const emit = defineEmits<{
 		open: [id: string];
 		select: [id: string];
@@ -29,7 +34,7 @@
 	const actions = computed<MenuAction[]>(() => [
 		{ id: props.entry.type === 'note' ? 'edit-note' : 'rename', label: 'Изменить' },
 		{ id: 'open', label: 'Открыть' },
-		{ id: 'select', label: 'Выбрать' },
+		{ id: 'select', label: 'Выбрать', disabled: props.selectionDisabled },
 		{ id: 'delete', label: 'Удалить ' + containerNoun(props.entry.type), danger: true },
 	]);
 

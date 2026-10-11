@@ -4,6 +4,17 @@ import { nextTick } from 'vue';
 import Notice from '@/components/Notice.vue';
 import { useNoticesStore } from '@/store/noticesStore';
 
+it('announces warnings with an exclamation icon using the warning status', async () => {
+	const wrapper = mount(Notice, { attachTo: document.body });
+	useNoticesStore().show('Задачи можно вставить только в перечень.', 'warning', { duration: 0 });
+	await flushPromises();
+	const host = document.querySelector('.notice-host')!;
+	expect(host.getAttribute('data-status')).toBe('warning');
+	expect(host.getAttribute('role')).toBe('status');
+	expect(host.querySelector('.notice__icon path')?.getAttribute('d')).toBe('M12 8v4m0 4h0');
+	wrapper.unmount();
+});
+
 it('announces errors, escapes messages and allows manual close', async () => {
 	vi.useFakeTimers();
 	const wrapper = mount(Notice, { attachTo: document.body });

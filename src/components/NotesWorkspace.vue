@@ -13,6 +13,7 @@
 	import { useNotesStore } from '@/store/notesStore';
 	import { useWorkspaceStore } from '@/store/workspaceStore';
 	import { useNoticesStore } from '@/store/noticesStore';
+	import { useClipboardStore } from '@/store/clipboardStore';
 	import { getChildren, canPlaceEntries, canSwapEntries } from '@/utils/entries';
 	import { ancestorEntries } from '@/utils/search';
 	import { containerNoun } from '@/utils/format';
@@ -38,6 +39,7 @@
 	const notes = useNotesStore();
 	const workspace = useWorkspaceStore();
 	const notices = useNoticesStore();
+	const clipboard = useClipboardStore();
 	useTheme(toRef(workspace, 'theme'));
 	const pwa = inject(PWA_KEY, null);
 	const userActions = computed<MenuAction[]>(() => [
@@ -99,7 +101,11 @@
 		if (!current.value || current.value.type === 'folder')
 			result.push({ id: 'add', label: 'Добавить', disabled: selecting.value });
 		if (entries.value.length)
-			result.push({ id: 'select', label: selecting.value ? 'Завершить выбор' : 'Выбрать' });
+			result.push({
+				id: 'select',
+				label: selecting.value ? 'Завершить выбор' : 'Выбрать',
+				disabled: !!clipboard.buffer,
+			});
 		if (current.value?.type === 'folder' || current.value?.type === 'checklist')
 			result.push({ id: 'rename', label: 'Изменить', disabled: selecting.value });
 		if (current.value?.type === 'note') result.push({ id: 'edit-note', label: 'Изменить заметку' });
@@ -124,6 +130,31 @@
 			return;
 		}
 		void router.push(id ? { name: 'entry', params: { id } } : { name: 'home' });
+	};
+
+	const copySelected = () => {
+		if (clipboard.copy(ids.value)) finish();
+	};
+	const pasteCopied = () => {
+		const buffer = clipboard.buffer;
+		if (!buffer) return;
+		if (!clipboard.canPaste(currentId.value)) {
+			const tasks = buffer.entries.some(
+				(entry) => entry.type === 'task' && buffer.rootIds.includes(entry.id),
+			);
+			notices.show(
+				tasks
+					? 'Задачи можно вставить только в перечень.'
+					: 'Папки, заметки и перечни можно вставить только в папку или на главную.',
+				'warning',
+			);
+			return;
+		}
+		clipboard.paste(currentId.value);
+	};
+	const cancelSelection = () => {
+		finish();
+		clipboard.clear();
 	};
 
 	const showForm = (type: Entry['type'], entry?: Entry, position: 'before' | 'after' = 'after') => {
@@ -182,7 +213,7 @@
 		const entry = notes.entry(id);
 		if (!entry) return;
 		if (action === 'open') navigate(id);
-		if (action === 'select') mark(id);
+		if (action === 'select' && !clipboard.buffer) mark(id);
 		if (action === 'edit-note') editNote(entry);
 		if (action === 'rename' || action === 'edit') showForm(entry.type, entry);
 		if (action === 'delete') requestDelete([id]);
@@ -190,7 +221,7 @@
 
 	const toolbarAction = (action: string) => {
 		if (action === 'add') addOpen.value = true;
-		if (action === 'select') toggleMode();
+		if (action === 'select' && !clipboard.buffer) toggleMode();
 		if (action === 'search') searchOpen.value = true;
 		if (action === 'view') viewOpen.value = true;
 		if (current.value) cardAction(action, current.value.id);
@@ -295,7 +326,11 @@
 	const keyboard = (event: KeyboardEvent) => {
 		if (event.key === 'Escape' && !root.value?.querySelector('dialog[open]')) {
 			if (pendingDrop.value) cancelDrop();
-			else finish();
+			else if (
+				!event.defaultPrevented &&
+				!root.value?.querySelector('.todo__menu-container.has-open-menu')
+			)
+				cancelSelection();
 		}
 	};
 
@@ -311,7 +346,11 @@
 </script>
 
 <template>
-	<main ref="root" class="todo-container todo" :class="{ 'is-selecting': selecting }">
+	<main
+		ref="root"
+		class="todo-container todo"
+		:class="{ 'is-selecting': selecting || clipboard.buffer }"
+	>
 		<header class="todo__header">
 			<ActionMenu
 				class="todo__user-options"
@@ -334,6 +373,23 @@
 		<Breadcrumbs :path="path" :selecting="selecting" @navigate="navigate" />
 		<Transition name="section" mode="out-in">
 			<div :key="currentId ?? 'home'" class="todo__section">
+				<div v-if="current?.type !== 'note' || clipboard.buffer" class="todo__count">
+					<div v-if="current?.type !== 'note'" class="todo__count-value">
+						Элементов: {{ entries.length }}
+					</div>
+					<SelectionToolbar
+						v-if="selecting || clipboard.buffer"
+						:count="clipboard.buffer ? clipboard.count : ids.length"
+						:total="entries.length"
+						:pasting="!!clipboard.buffer"
+						:can-paste="clipboard.canPaste(currentId)"
+						@all="toggleAll"
+						@remove="requestDelete(ids)"
+						@copy="copySelected"
+						@paste="pasteCopied"
+						@cancel="cancelSelection"
+					/>
+				</div>
 				<NoteView
 					v-if="current?.type === 'note'"
 					:note="current"
@@ -343,17 +399,6 @@
 					@save="saveNote"
 				/>
 				<template v-else>
-					<div class="todo__count">
-						<div class="todo__count-value">Элементов: {{ entries.length }}</div>
-						<SelectionToolbar
-							v-if="selecting"
-							:count="ids.length"
-							:total="entries.length"
-							@all="toggleAll"
-							@remove="requestDelete(ids)"
-							@cancel="finish"
-						/>
-					</div>
 					<EntryList
 						:entries="entries"
 						:current-id="currentId"
@@ -361,6 +406,7 @@
 						:layout="workspace.layout"
 						:selecting="selecting"
 						:selected="selected"
+						:selection-disabled="!!clipboard.buffer"
 						:highlight="highlight"
 						@open="navigate"
 						@toggle="notes.toggleTask"
