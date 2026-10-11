@@ -1,6 +1,7 @@
 <script setup lang="ts">
 	import { useNotice } from '@/composables/useNotice';
 	import IconControl from '@/assets/icons/IconControl.vue';
+	import IconNotice from '@/assets/icons/IconNotice.vue';
 
 	withDefaults(defineProps<{ top?: string; width?: string }>(), { top: '20px', width: '460px' });
 	const { current, host, target, closing, entering, close } = useNotice();
@@ -21,9 +22,7 @@
 			:style="{ '--notice-top': top, '--notice-width': width }"
 		>
 			<div class="notice" @animationend.self="entering = false">
-				<span class="notice__icon" aria-hidden="true">
-					{{ current.status === 'success' ? '✓' : current.status === 'error' ? '✕' : 'ⓘ' }}
-				</span>
+				<IconNotice :status="current.status" />
 				<span class="notice__text">{{ current.message }}</span>
 				<button
 					v-if="current.closable"
@@ -71,9 +70,7 @@
 	}
 
 	.notice__icon {
-		display: grid;
-		place-items: center;
-		flex: 0 0 28px;
+		flex: 0 0 24px;
 		color: var(--notice-accent);
 	}
 
@@ -155,6 +152,9 @@
 		--notice-info: var(--color-blue);
 		--notice-info-bg: var(--color-blue-light);
 		--notice-info-border: var(--color-blue-border);
+		--notice-warning: var(--color-yellow);
+		--notice-warning-bg: var(--color-yellow-light);
+		--notice-warning-border: var(--color-yellow-border);
 		--notice-accent: var(--notice-info);
 		--notice-bg: var(--notice-info-bg);
 		--notice-border: var(--notice-info-border);
@@ -170,5 +170,10 @@
 		--notice-accent: var(--notice-error);
 		--notice-bg: var(--notice-error-bg);
 		--notice-border: var(--notice-error-border);
+	}
+	.notice-host[data-status='warning'] {
+		--notice-accent: var(--notice-warning);
+		--notice-bg: var(--notice-warning-bg);
+		--notice-border: var(--notice-warning-border);
 	}
 </style>

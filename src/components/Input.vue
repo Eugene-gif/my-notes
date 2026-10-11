@@ -10,7 +10,7 @@
 		}>(),
 		{ type: 'text', placeholder: '', required: false, autofocus: false },
 	);
-	
+
 	const value = defineModel<string>({ default: '' });
 </script>
 

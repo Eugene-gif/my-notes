@@ -21,5 +21,5 @@ export const mountWorkspace = async (url = '/') => {
 		attachTo: document.body,
 	});
 
-	return { wrapper, notes, router, pinia };
+	return { wrapper, notes, router, pinia, storage };
 };

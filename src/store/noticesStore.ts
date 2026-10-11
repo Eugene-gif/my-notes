@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
-export type NoticeStatus = 'success' | 'error' | 'info';
+export type NoticeStatus = 'success' | 'error' | 'info' | 'warning';
 
 export interface NoticeMessage {
 	id: number;

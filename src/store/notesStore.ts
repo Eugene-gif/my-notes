@@ -1,6 +1,13 @@
 import { defineStore } from 'pinia';
 import { ref, toRaw } from 'vue';
-import type { ContainerType, Entry, NotesState, ParentId, StorageLike } from '@/types/notes';
+import type {
+	ContainerType,
+	Entry,
+	EntryClipboard,
+	NotesState,
+	ParentId,
+	StorageLike,
+} from '@/types/notes';
 import { browserStorage } from '@/utils/storage';
 import { restoreNotes, persistNotes } from '@/utils/persistence';
 import { getEntry, nextOrder, placeEntries, swapEntries, deleteEntries } from '@/utils/entries';
@@ -8,6 +15,7 @@ import { formatFolderName } from '@/utils/format';
 import { advanceTaskStatus } from '@/utils/taskStatus';
 import { useNoticesStore } from './noticesStore';
 import { createEmptyState } from '@/utils/normalizeState';
+import { pasteClipboard } from '@/utils/clipboard';
 
 export const useNotesStore = defineStore('notes', () => {
 	const state = ref<NotesState>(createEmptyState());
@@ -125,6 +133,20 @@ export const useNotesStore = defineStore('notes', () => {
 		commit((draft) => swapEntries(draft, first, second), 'Элементы поменялись местами.');
 
 	const entry = (id: ParentId): Entry | undefined => getEntry(state.value, id);
+	const paste = (clipboard: EntryClipboard, parentId: ParentId) =>
+		commit((draft) => pasteClipboard(draft, clipboard, parentId), 'Элементы скопированы.');
 
-	return { state, initialized, initialize, create, update, toggleTask, remove, move, swap, entry };
+	return {
+		state,
+		initialized,
+		initialize,
+		create,
+		update,
+		toggleTask,
+		remove,
+		move,
+		swap,
+		entry,
+		paste,
+	};
 });

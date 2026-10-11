@@ -51,6 +51,11 @@ export interface Note extends BaseEntry {
 export type Container = Folder | Checklist | Note;
 export type Entry = Task | Container;
 
+export interface EntryClipboard {
+	rootIds: string[];
+	entries: Entry[];
+}
+
 export interface NotesState {
 	tasks: Task[];
 	folders: Folder[];

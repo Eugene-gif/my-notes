@@ -4,6 +4,17 @@ import { nextTick } from 'vue';
 import Notice from '@/components/Notice.vue';
 import { useNoticesStore } from '@/store/noticesStore';
 
+it('announces warnings with an exclamation icon using the warning status', async () => {
+	const wrapper = mount(Notice, { attachTo: document.body });
+	useNoticesStore().show('Задачи можно вставить только в перечень.', 'warning', { duration: 0 });
+	await flushPromises();
+	const host = document.querySelector('.notice-host')!;
+	expect(host.getAttribute('data-status')).toBe('warning');
+	expect(host.getAttribute('role')).toBe('status');
+	expect(host.querySelector('.notice__icon path')?.getAttribute('d')).toBe('M12 8v4m0 4h0');
+	wrapper.unmount();
+});
+
 it('announces errors, escapes messages and allows manual close', async () => {
 	vi.useFakeTimers();
 	const wrapper = mount(Notice, { attachTo: document.body });
@@ -14,6 +25,7 @@ it('announces errors, escapes messages and allows manual close', async () => {
 	expect(host.getAttribute('role')).toBe('alert');
 	expect(host.textContent).toContain('<img src=x>');
 	expect(host.querySelector('img')).toBeNull();
+	expect(host.querySelector('.notice__icon path')?.getAttribute('d')).toBe('m9 9 6 6m0-6-6 6');
 	(host.querySelector('button') as HTMLButtonElement).click();
 	vi.advanceTimersByTime(160);
 	await nextTick();

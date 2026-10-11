@@ -5,6 +5,26 @@ import ContainerCard from '@/components/ContainerCard.vue';
 import { useNotesStore } from '@/store/notesStore';
 import { fixture } from '../../fixtures';
 
+it.each(['folders', 'checklists', 'notes'] as const)(
+	'orders %s actions with editing first and deletion last',
+	async (collection) => {
+		const state = fixture();
+		useNotesStore().state = state;
+		const wrapper = mount(ContainerCard, { props: { entry: state[collection][0] } });
+		await wrapper.get('.folder__options').trigger('click');
+		expect(wrapper.findAll('[role="menuitem"]').map((item) => item.text())).toEqual([
+			'Изменить',
+			'Открыть',
+			'Выбрать',
+			collection === 'folders'
+				? 'Удалить папку'
+				: collection === 'checklists'
+					? 'Удалить перечень'
+					: 'Удалить заметку',
+		]);
+	},
+);
+
 it('renders container summaries safely and separates navigation from selection', async () => {
 	const state = fixture();
 	useNotesStore().state = state;
@@ -26,4 +46,19 @@ it('shows checklist completion and direct folder children', () => {
 	expect(list.attributes('data-status')).toBe('partial');
 	const folder = mount(ContainerCard, { props: { entry: state.folders[0] } });
 	expect(folder.text()).toContain('2 элемента');
+});
+
+it('disables selection while a clipboard is awaiting paste without disabling navigation', async () => {
+	const state = fixture();
+	useNotesStore().state = state;
+	const wrapper = mount(ContainerCard, {
+		props: { entry: state.folders[0], selectionDisabled: true },
+	});
+	await wrapper.get('.folder__options').trigger('click');
+	const select = wrapper.findAll('[role="menuitem"]').find((item) => item.text() === 'Выбрать')!;
+	expect(select.attributes('disabled')).toBeDefined();
+	await select.trigger('click');
+	expect(wrapper.emitted('action')).toBeUndefined();
+	await wrapper.get('.folder__open').trigger('click');
+	expect(wrapper.emitted('open')?.[0]).toEqual(['folder']);
 });

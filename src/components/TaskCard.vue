@@ -7,7 +7,12 @@
 	import ActionMenu from '@/components/ActionMenu.vue';
 	import { useTaskExpansion } from '@/composables/useTaskExpansion';
 
-	const props = defineProps<{ entry: Task; selecting?: boolean; selected?: boolean }>();
+	const props = defineProps<{
+		entry: Task;
+		selecting?: boolean;
+		selected?: boolean;
+		selectionDisabled?: boolean;
+	}>();
 	const emit = defineEmits<{
 		toggle: [id: string];
 		select: [id: string];
@@ -108,8 +113,8 @@
 		<ActionMenu
 			v-if="!selecting"
 			:actions="[
-				{ id: 'select', label: 'Выбрать' },
 				{ id: 'edit', label: 'Изменить' },
+				{ id: 'select', label: 'Выбрать', disabled: selectionDisabled },
 				{ id: 'delete', label: 'Удалить', danger: true },
 			]"
 			:label="'Действия задачи «' + entry.value + '»'"

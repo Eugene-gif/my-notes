@@ -5,6 +5,7 @@
 	import TaskCard from '@/components/TaskCard.vue';
 	import ContainerCard from '@/components/ContainerCard.vue';
 	import IconMenu from '@/assets/icons/IconMenu.vue';
+	import Button from '@/components/Button.vue';
 
 	const props = defineProps<{
 		entries: Entry[];
@@ -12,16 +13,20 @@
 		checklist: boolean;
 		layout: Layout;
 		selecting: boolean;
+		selectionDisabled?: boolean;
 		selected: Set<string>;
 		highlight?: string;
 	}>();
+
 	const emit = defineEmits<{
 		toggle: [id: string];
 		select: [id: string];
 		open: [id: string];
 		action: [action: string, id: string];
 		add: [position: 'before' | 'after'];
+		'add-entry': [];
 	}>();
+
 	const list = ref<HTMLElement | null>(null);
 	const version = computed(() => [props.entries, props.layout]);
 	useCardLayout(list, version);
@@ -50,6 +55,7 @@
 				v-if="entry.type === 'task'"
 				:entry="entry"
 				:selecting="selecting"
+				:selection-disabled="selectionDisabled"
 				:selected="selected.has(entry.id)"
 				:class="{ 'is-search-result': highlight === entry.id }"
 				@toggle="emit('toggle', $event)"
@@ -60,6 +66,7 @@
 				v-else
 				:entry="entry"
 				:selecting="selecting"
+				:selection-disabled="selectionDisabled"
 				:selected="selected.has(entry.id)"
 				@open="emit('open', $event)"
 				@select="emit('select', $event)"
@@ -78,16 +85,30 @@
 			</button>
 		</li>
 	</ul>
-	<p
+	<div
 		v-if="!entries.length && !checklist"
-		class="todo__list-empty"
+		class="todo__empty-folder"
 		:data-drop-folder="currentId ?? ''"
 	>
-		{{ currentId ? 'Папка пуста' : 'Список пуст' }}
-	</p>
+		<p class="todo__list-empty">{{ currentId ? 'Папка пуста' : 'Список пуст' }}</p>
+		<Button :disabled="selecting" @click="emit('add-entry')">
+			<IconMenu name="add" />
+			Добавить
+		</Button>
+	</div>
 </template>
 
 <style scoped>
+	.todo__empty-folder {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 12px;
+	}
+	.todo__list-empty {
+		margin: 0;
+		font-size: 20px;
+	}
 	.todo__add-card {
 		touch-action: pan-y pinch-zoom;
 		-webkit-touch-callout: none;

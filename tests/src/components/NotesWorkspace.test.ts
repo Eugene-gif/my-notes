@@ -1,6 +1,10 @@
 import { flushPromises } from '@vue/test-utils';
 import { expect, it, vi } from 'vitest';
 import { mountWorkspace } from '../../workspace';
+import { useClipboardStore } from '@/store/clipboardStore';
+import { getChildren } from '@/utils/entries';
+import { useNoticesStore } from '@/store/noticesStore';
+import { restoreNotes } from '@/utils/persistence';
 
 const menuAction = async (
 	wrapper: Awaited<ReturnType<typeof mountWorkspace>>['wrapper'],
@@ -11,6 +15,27 @@ const menuAction = async (
 	await action.trigger('click');
 	await flushPromises();
 };
+
+it('saves edited multiline tasks without joining lines in persisted data', async () => {
+	const { wrapper, notes, storage } = await mountWorkspace('/entry/list');
+	notes.update('task', 'Купить хлеб\nКупить молоко');
+	await flushPromises();
+	const card = wrapper.get('[data-id="task"]');
+	await card.get('.folder__options').trigger('click');
+	await card
+		.findAll('[role="menuitem"]')
+		.find((item) => item.text() === 'Изменить')!
+		.trigger('click');
+	await flushPromises();
+	const editor = wrapper.get('dialog[open] textarea');
+	expect((editor.element as HTMLTextAreaElement).value).toBe('Купить хлеб\nКупить молоко');
+	await editor.setValue('Купить хлеб\nКупить молоко!');
+	await wrapper.get('dialog[open] form').trigger('submit');
+	await flushPromises();
+	expect(restoreNotes(storage).tasks.find((task) => task.id === 'task')?.value).toBe(
+		'Купить хлеб\nКупить молоко!',
+	);
+});
 
 it('switches the theme and keeps other user actions as placeholders', async () => {
 	const { wrapper, notes, router } = await mountWorkspace();
@@ -98,7 +123,7 @@ it('cycles tasks, selects groups and adds top/bottom tasks', async () => {
 	await wrapper.find('.task__toggle').trigger('click');
 	expect(notes.state.tasks[0].status).toBe('in-progress');
 	await wrapper.find('.todo__add-task').trigger('click');
-	await wrapper.find('textarea').setValue('В начало');
+	await wrapper.find('input').setValue('В начало');
 	await wrapper.find('form').trigger('submit');
 	await flushPromises();
 	expect(wrapper.findAll('.task__text')[0].text()).toBe('В начало');
@@ -138,4 +163,159 @@ it('uses router navigation and returns to the parent after deleting a section', 
 	await wrapper.find('.todo__back').trigger('click');
 	await flushPromises();
 	expect(router.currentRoute.value.name).toBe('home');
+});
+
+it('opens the element picker from an empty folder and uses the edit label in its menu', async () => {
+	const { wrapper } = await mountWorkspace('/entry/nested');
+	expect(wrapper.get('.todo__list-empty').text()).toBe('Папка пуста');
+	await wrapper.get('.todo__empty-folder .button').trigger('click');
+	await flushPromises();
+	expect(wrapper.get('dialog[open] h2').text()).toBe('Добавить элемент');
+	await wrapper.get('dialog[open] .btn-modal-close').trigger('click');
+	await menuAction(wrapper, 'Изменить');
+	expect(wrapper.get<HTMLInputElement>('form input').element.value).toBe('Проект');
+});
+
+it('navigates into note editing without resetting the requested edit mode', async () => {
+	const { wrapper, router, notes } = await mountWorkspace();
+	const card = wrapper.get('[data-id="note"]');
+	await card.get('.folder__options').trigger('click');
+	await card
+		.findAll('[role="menuitem"]')
+		.find((item) => item.text() === 'Изменить')!
+		.trigger('click');
+	await flushPromises();
+	expect(router.currentRoute.value.params.id).toBe('note');
+	expect(wrapper.get('form label[for="entry-name"]').text()).toBe('Заголовок');
+	expect(wrapper.get('form textarea').attributes('placeholder')).toBe('Введите текст');
+	await wrapper.get('form input').setValue('Новый заголовок');
+	await wrapper.get('form').trigger('submit');
+	expect(notes.entry('note')).toMatchObject({ name: 'Новый заголовок' });
+});
+
+it('copies selected trees, permits navigation and pastes into an empty folder once', async () => {
+	const { wrapper, router, notes } = await mountWorkspace();
+	const original = JSON.stringify(notes.state);
+	await menuAction(wrapper, 'Выбрать');
+	await wrapper.get('[data-id="folder"] .folder__open').trigger('click');
+	await wrapper.get('[data-id="note"] .folder__open').trigger('click');
+	const buttons = wrapper.findAll('.todo__batch-actions button');
+	expect(buttons.map((button) => button.text())).toEqual([
+		'Выбрать все',
+		'Удалить выбранные',
+		'Скопировать',
+		'Отмена',
+	]);
+	await buttons[2].trigger('click');
+	expect(JSON.stringify(notes.state)).toBe(original);
+	expect(wrapper.findAll('.todo__batch-actions button').map((button) => button.text())).toEqual([
+		'Вставить',
+		'Отмена',
+	]);
+	expect(wrapper.get('.todo__selection-count').text()).toBe('Скопировано: 2');
+	expect(wrapper.get('.folder__open').attributes('aria-label')).toContain('Открыть');
+	await wrapper.get('[data-id="folder"] .folder__open').trigger('click');
+	await flushPromises();
+	expect(router.currentRoute.value.params.id).toBe('folder');
+	await wrapper.get('[data-id="nested"] .folder__open').trigger('click');
+	await flushPromises();
+	expect(wrapper.get('.todo__list-empty').text()).toBe('Папка пуста');
+	await wrapper.get('.todo__batch-actions button').trigger('click');
+	await flushPromises();
+	expect(wrapper.find('.todo__batch-actions').exists()).toBe(false);
+	const pasted = getChildren(notes.state, 'nested');
+	expect(pasted).toMatchObject([
+		{ type: 'folder', name: 'Работа' },
+		{ type: 'note', description: notes.state.notes[0].description },
+	]);
+	expect(pasted.map((entry) => entry.id)).not.toContain('folder');
+	expect(getChildren(notes.state, pasted[0].id)).toHaveLength(2);
+	expect(notes.entry('folder')).toMatchObject({ parentId: null });
+});
+
+it('allows cancelling pending paste from notes or Escape without changing any data', async () => {
+	const { wrapper, notes, router, pinia } = await mountWorkspace();
+	const clipboard = useClipboardStore(pinia);
+	const original = JSON.stringify(notes.state);
+	clipboard.copy(['folder']);
+	await router.push('/entry/note');
+	await flushPromises();
+	expect(wrapper.get('.todo__batch-actions button').attributes('aria-disabled')).toBe('true');
+	await wrapper.get('.todo__cancel').trigger('click');
+	expect(clipboard.buffer).toBeNull();
+	clipboard.copy(['note']);
+	await router.push('/entry/folder');
+	await flushPromises();
+	await wrapper.get('.todo__menu-trigger').trigger('click');
+	document.dispatchEvent(
+		new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+	);
+	await flushPromises();
+	expect(clipboard.count).toBe(1);
+	document.dispatchEvent(
+		new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+	);
+	await flushPromises();
+	expect(clipboard.buffer).toBeNull();
+	expect(JSON.stringify(notes.state)).toBe(original);
+});
+
+it('keeps paste visible but disabled for incompatible destinations and enables it for tasks in another checklist', async () => {
+	const { wrapper, notes, router, pinia } = await mountWorkspace('/entry/list');
+	await menuAction(wrapper, 'Выбрать');
+	await wrapper.get('.task__toggle').trigger('click');
+	await wrapper.findAll('.todo__batch-actions button')[2].trigger('click');
+	await router.push('/entry/folder');
+	await flushPromises();
+	expect(wrapper.get('.todo__batch-actions button').attributes('aria-disabled')).toBe('true');
+	await wrapper.get('[data-id="other"] .folder__open').trigger('click');
+	await flushPromises();
+	expect(wrapper.get('.todo__batch-actions button').attributes('aria-disabled')).toBe('false');
+	await wrapper.get('.todo__batch-actions button').trigger('click');
+	expect(getChildren(notes.state, 'other')).toMatchObject([
+		{ id: 'task3' },
+		{ value: 'Купить молоко', status: 'pending' },
+	]);
+	expect(useClipboardStore(pinia).buffer).toBeNull();
+});
+
+it.each(['/', '/entry/folder', '/entry/note'])(
+	'warns about task paste in %s without clearing the clipboard or changing data',
+	async (destination) => {
+		const { wrapper, notes, router, pinia } = await mountWorkspace('/entry/list');
+		const clipboard = useClipboardStore(pinia);
+		const original = JSON.stringify(notes.state);
+		clipboard.copy(['task']);
+		await router.push(destination);
+		await flushPromises();
+		const paste = wrapper.get('.todo__batch-actions button');
+		expect(paste.attributes('aria-disabled')).toBe('true');
+		await paste.trigger('click');
+		expect(useNoticesStore(pinia).current).toMatchObject({
+			status: 'warning',
+			message: 'Задачи можно вставить только в перечень.',
+		});
+		expect(clipboard.count).toBe(1);
+		expect(JSON.stringify(notes.state)).toBe(original);
+		await router.push('/entry/other');
+		await flushPromises();
+		await wrapper.get('.todo__batch-actions button').trigger('click');
+		expect(clipboard.buffer).toBeNull();
+		expect(getChildren(notes.state, 'other')).toHaveLength(2);
+	},
+);
+
+it('warns about container paste into a checklist without confusing its nested tasks with copied roots', async () => {
+	const { wrapper, notes, router, pinia } = await mountWorkspace();
+	const clipboard = useClipboardStore(pinia);
+	const original = JSON.stringify(notes.state);
+	clipboard.copy(['folder']);
+	await router.push('/entry/list');
+	await flushPromises();
+	await wrapper.get('.todo__batch-actions button').trigger('click');
+	expect(useNoticesStore(pinia).current?.message).toBe(
+		'Папки, заметки и перечни можно вставить только в папку или на главную.',
+	);
+	expect(JSON.stringify(notes.state)).toBe(original);
+	expect(clipboard.count).toBe(1);
 });
